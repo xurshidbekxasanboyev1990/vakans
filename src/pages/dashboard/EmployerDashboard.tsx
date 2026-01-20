@@ -1,0 +1,192 @@
+﻿import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { jobsApi, applicationsApi } from '@/lib/api';
+import { Job, Application } from '@/types';
+import { Briefcase, Users, Eye, Plus, Clock } from 'lucide-react';
+import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
+
+export function EmployerDashboard() {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [jobsRes, appsRes] = await Promise.all([
+          jobsApi.getMyJobs(),
+          applicationsApi.getMyApplications(),
+        ]);
+        if (jobsRes.success) setJobs(jobsRes.data || []);
+        if (appsRes.success) setApplications(appsRes.data || []);
+      } catch (error) {
+        console.error('Error fetching employer data:', error);
+        toast.error('Ma\'lumotlarni yuklashda xatolik yuz berdi');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 },
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-secondary-50 dark:bg-secondary-950 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
+
+  const activeJobs = jobs.filter((job) => job.status === 'active').length;
+  const pendingApplications = applications.filter((app) => app.status === 'pending').length;
+  const totalViews = jobs.reduce((sum, job) => sum + (job.viewsCount || 0), 0);
+
+  return (
+    <div className="min-h-screen bg-secondary-50 dark:bg-secondary-950 py-8 px-4">
+      <motion.div 
+        className="max-w-7xl mx-auto"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <motion.div variants={itemVariants} className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-secondary-900 dark:text-white">Ish beruvchi paneli</h1>
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Link to="/jobs/create" className="inline-flex items-center px-5 py-3 bg-primary-500 text-white rounded-xl hover:bg-primary-600 font-medium shadow-lg shadow-primary-500/25 transition-all">
+              <Plus className="w-5 h-5 mr-2" />
+              Yangi ish
+            </Link>
+          </motion.div>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          {[
+            { title: 'Faol ishlar', value: activeJobs, icon: Briefcase, color: 'green' },
+            { title: 'Kutilayotgan arizalar', value: pendingApplications, icon: Clock, color: 'yellow' },
+            { title: 'Jami ko\'rishlar', value: totalViews, icon: Eye, color: 'blue' },
+            { title: 'Jami arizalar', value: applications.length, icon: Users, color: 'purple' },
+          ].map((stat, index) => (
+            <motion.div
+              key={stat.title}
+              variants={itemVariants}
+              className="bg-white dark:bg-secondary-900 rounded-2xl p-6 shadow-sm border border-secondary-200 dark:border-secondary-800"
+              whileHover={{ y: -4 }}
+              transition={{ delay: index * 0.1 }}
+            >
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-secondary-500">{stat.title}</p>
+                  <p className="text-3xl font-bold text-secondary-900 dark:text-white mt-1">{stat.value}</p>
+                </div>
+                <div className={`w-12 h-12 bg-${stat.color}-100 dark:bg-${stat.color}-900/30 rounded-xl flex items-center justify-center`}>
+                  <stat.icon className={`w-6 h-6 text-${stat.color}-500`} />
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <motion.div 
+            variants={itemVariants}
+            className="bg-white dark:bg-secondary-900 rounded-2xl p-6 shadow-sm border border-secondary-200 dark:border-secondary-800"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-secondary-900 dark:text-white">Mening ishlarim</h2>
+              <Link to="/employer/jobs" className="text-primary-500 text-sm hover:underline font-medium">Barchasini ko'rish</Link>
+            </div>
+            <div className="space-y-3">
+              {jobs.slice(0, 5).map((job, index) => (
+                <motion.div
+                  key={job.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  whileHover={{ scale: 1.01 }}
+                >
+                  <Link 
+                    to={`/jobs/${job.id}`} 
+                    className="block p-4 bg-secondary-50 dark:bg-secondary-800/50 rounded-xl border border-secondary-100 dark:border-secondary-800 hover:border-primary-300 dark:hover:border-primary-700 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium text-secondary-900 dark:text-white">{job.title}</h3>
+                        <p className="text-sm text-secondary-500">{job.location}</p>
+                      </div>
+                      <span className={`px-3 py-1 text-xs font-medium rounded-lg ${
+                        job.status === 'active' 
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
+                          : 'bg-secondary-100 dark:bg-secondary-800 text-secondary-600 dark:text-secondary-400'
+                      }`}>{job.status}</span>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+              {jobs.length === 0 && (
+                <div className="text-center py-8">
+                  <Briefcase className="w-12 h-12 text-secondary-300 mx-auto mb-3" />
+                  <p className="text-secondary-500">Hali ish qo'shilmagan</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          <motion.div 
+            variants={itemVariants}
+            className="bg-white dark:bg-secondary-900 rounded-2xl p-6 shadow-sm border border-secondary-200 dark:border-secondary-800"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-secondary-900 dark:text-white">Oxirgi arizalar</h2>
+              <Link to="/employer/applications" className="text-primary-500 text-sm hover:underline font-medium">Barchasini ko'rish</Link>
+            </div>
+            <div className="space-y-3">
+              {applications.slice(0, 5).map((app, index) => (
+                <motion.div 
+                  key={app.id} 
+                  className="p-4 bg-secondary-50 dark:bg-secondary-800/50 rounded-xl border border-secondary-100 dark:border-secondary-800"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium text-secondary-900 dark:text-white">{app.workerName || app.applicantName}</h3>
+                      <p className="text-sm text-secondary-500">{app.jobTitle}</p>
+                    </div>
+                    <span className={`px-3 py-1 text-xs font-medium rounded-lg ${
+                      app.status === 'accepted' ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 
+                      app.status === 'rejected' ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' : 
+                      'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                    }`}>{app.status}</span>
+                  </div>
+                </motion.div>
+              ))}
+              {applications.length === 0 && (
+                <div className="text-center py-8">
+                  <Users className="w-12 h-12 text-secondary-300 mx-auto mb-3" />
+                  <p className="text-secondary-500">Arizalar yo'q</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+export default EmployerDashboard;
