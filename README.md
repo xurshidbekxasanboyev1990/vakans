@@ -259,4 +259,47 @@ Pull requestlar qabul qilinadi. Katta o'zgarishlar uchun avval issue oching.
 
 ---
 
-**Built with ❤️ for O'zbekiston job market**
+## 👥 Loyiha Jamoasi
+
+<table>
+  <tr>
+    <td align="center">
+      <b>🎨 Frontend</b><br/>
+      <sub><b>Xojisaid Mannobov</b></sub>
+    </td>
+    <td align="center">
+      <b>⚙️ Backend</b><br/>
+      <sub><b>Xasanboyev Xurshidbek</b></sub>
+    </td>
+  </tr>
+</table>
+
+### 🏛️ Tashkilot
+
+<table>
+  <tr>
+    <td align="center">
+      <img src="https://img.shields.io/badge/KUAF-Startuplar%20bo'limi-blue?style=for-the-badge" alt="KUAF"/>
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <b>📋 Startuplar bilan ishlash bo'limi</b><br/>
+      <b>Rahbar:</b> Tuychiyeev Javlonbek
+    </td>
+  </tr>
+</table>
+
+---
+
+<p align="center">
+  <b>Built with ❤️ for O'zbekiston job market</b>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react" alt="React"/>
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript" alt="TypeScript"/>
+  <img src="https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=flat-square&logo=tailwind-css" alt="Tailwind"/>
+  <img src="https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite" alt="Vite"/>
+</p>
+
