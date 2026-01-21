@@ -89,7 +89,8 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       setStoredValue(valueToStore)
       window.localStorage.setItem(key, JSON.stringify(valueToStore))
     } catch (error) {
-      console.error('Error saving to localStorage:', error)
+      // Error is intentionally not logged to avoid console spam
+      // Use logger in components if needed
     }
   }
 
@@ -129,7 +130,7 @@ export function useCopyToClipboard() {
 
   const copy = async (text: string) => {
     if (!navigator?.clipboard) {
-      console.warn('Clipboard not supported')
+
       return false
     }
 
@@ -277,4 +278,9 @@ export function useKeyboardShortcut(
   }, [keys, callback, options.preventDefault])
 }
 
-export { useParallax } from './useParallax'
+// Re-export other hooks
+export { useParallax } from './useParallax';
+export { useHaptic } from './useHaptic'
+export { usePullToRefresh } from './usePullToRefresh'
+export { useOfflineStorage } from './useOfflineStorage'
+export { useRealTimeNotifications } from './useRealTimeNotifications'

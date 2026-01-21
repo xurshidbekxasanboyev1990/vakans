@@ -2,6 +2,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { PWAInstallPrompt } from '@/components/ui';
 import { Layout } from '@/components/layout';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 
 // Pages
 import { LandingPage } from '@/pages/LandingPage';
@@ -10,6 +11,7 @@ import { JobsPage, JobDetailPage } from '@/pages/jobs';
 import { WorkerDashboard, EmployerDashboard, AdminDashboard } from '@/pages/dashboard';
 import { ProfilePage } from '@/pages/profile/ProfilePage';
 import { SettingsPage } from '@/pages/settings/SettingsPage';
+import { NotificationsPage } from '@/pages/notifications/NotificationsPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 
 // Protected Route Component
@@ -73,7 +75,7 @@ function DashboardRouter() {
 
 function AppRoutes() {
   return (
-    <>
+    <ErrorBoundary>
       <PWAInstallPrompt />
       <Routes>
         {/* Landing - no layout */}
@@ -87,16 +89,34 @@ function AppRoutes() {
         <Route element={<Layout />}>
           <Route path="/jobs" element={<JobsPage />} />
           <Route path="/jobs/:id" element={<JobDetailPage />} />
+          
+          {/* Worker Routes */}
+          <Route path="/worker/applications" element={<ProtectedRoute roles={['worker']}><Navigate to="/dashboard" replace /></ProtectedRoute>} />
+          
+          {/* Employer Routes */}
+          <Route path="/employer" element={<ProtectedRoute roles={['employer']}><Navigate to="/dashboard" replace /></ProtectedRoute>} />
+          <Route path="/employer/jobs" element={<ProtectedRoute roles={['employer']}><Navigate to="/dashboard" replace /></ProtectedRoute>} />
+          <Route path="/employer/applications" element={<ProtectedRoute roles={['employer']}><Navigate to="/dashboard" replace /></ProtectedRoute>} />
+          <Route path="/jobs/create" element={<ProtectedRoute roles={['employer']}><Navigate to="/dashboard" replace /></ProtectedRoute>} />
+          
+          {/* Profile & Settings */}
+          <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/profile/:id" element={<ProfilePage />} />
-          <Route path="/dashboard" element={<ProtectedRoute><DashboardRouter /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-          <Route path="/admin/*" element={<ProtectedRoute roles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+          
+          {/* Legal Pages */}
+          <Route path="/privacy" element={<Navigate to="/" replace />} />
+          <Route path="/terms" element={<Navigate to="/" replace />} />
         </Route>
+
+        {/* Dashboard - no layout (has its own header) */}
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardRouter /></ProtectedRoute>} />
 
         {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
-    </>
+    </ErrorBoundary>
   );
 }
 

@@ -2,7 +2,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { usersApi } from '@/lib/api';
 import { Settings, Moon, Sun, Lock, LogOut } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -36,8 +36,16 @@ export function SettingsPage() {
       toast.error('Parollar mos kelmaydi');
       return;
     }
-    if (passwordData.newPassword.length < 6) {
-      toast.error('Parol kamida 6 ta belgi bo\'lishi kerak');
+    if (passwordData.newPassword.length < 8) {
+      toast.error('Parol kamida 8 ta belgidan iborat bo\'lishi kerak');
+      return;
+    }
+    // Password strength check
+    const hasUpperCase = /[A-Z]/.test(passwordData.newPassword);
+    const hasLowerCase = /[a-z]/.test(passwordData.newPassword);
+    const hasNumber = /\d/.test(passwordData.newPassword);
+    if (!hasUpperCase || !hasLowerCase || !hasNumber) {
+      toast.error('Parol kamida 1 katta harf, 1 kichik harf va 1 raqam bo\'lishi kerak');
       return;
     }
     setIsLoading(true);

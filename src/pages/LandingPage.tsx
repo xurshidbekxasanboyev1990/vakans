@@ -77,7 +77,7 @@ export function LandingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-secondary-950 overflow-hidden">
+    <div className="relative min-h-screen bg-white dark:bg-secondary-950 overflow-hidden">
       {/* Hero Section - Apple Style */}
       <section 
         ref={heroRef}

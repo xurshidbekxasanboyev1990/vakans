@@ -30,6 +30,9 @@ export function Skeleton({
 
   return (
     <div
+      role="status"
+      aria-busy="true"
+      aria-label="Yuklanmoqda..."
       className={cn(
         'bg-secondary-200 dark:bg-secondary-800',
         variants[variant],

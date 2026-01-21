@@ -43,33 +43,35 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      // Return cached response if available
-      if (cachedResponse) {
-        // Update cache in background
-        fetch(request).then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, networkResponse.clone())
-            })
-          }
-        })
-        return cachedResponse
-      }
+  // Skip HMR and dev server requests
+  if (request.url.includes('?t=') || 
+      request.url.includes('/@') || 
+      request.url.includes('/node_modules/') ||
+      request.url.includes('hot-update') ||
+      request.url.includes('.map')) {
+    return fetch(request)
+  }
 
-      // Otherwise fetch from network
-      return fetch(request).then((networkResponse) => {
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
         // Cache successful responses
-        if (networkResponse && networkResponse.status === 200) {
-          const responseClone = networkResponse.clone()
+        if (response && response.status === 200) {
+          const responseClone = response.clone()
           caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseClone)
+            cache.put(request, responseClone).catch(() => {
+              // Ignore cache errors in development
+            })
           })
         }
-        return networkResponse
+        return response
       })
-    })
+      .catch(() => {
+        // Fallback to cache on network failure
+        return caches.match(request).then((cachedResponse) => {
+          return cachedResponse || new Response('Offline', { status: 503 })
+        })
+      })
   )
 })
 

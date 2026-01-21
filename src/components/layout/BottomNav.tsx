@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils'
 const navItems = [
   { path: '/', icon: Home, label: 'Bosh sahifa' },
   { path: '/jobs', icon: Briefcase, label: 'Ishlar' },
-  { path: '/chat', icon: MessageSquare, label: 'Xabarlar' },
   { path: '/notifications', icon: Bell, label: 'Bildirishnoma' },
   { path: '/dashboard', icon: User, label: 'Profil' },
 ]
@@ -34,7 +33,7 @@ export function BottomNav() {
               (item.path !== '/' && location.pathname.startsWith(item.path))
             
             // Hide auth-required items for guests
-            if (!isAuthenticated && ['chat', 'notifications', 'dashboard'].some(p => item.path.includes(p))) {
+            if (!isAuthenticated && ['notifications', 'dashboard'].some(p => item.path.includes(p))) {
               if (item.path === '/dashboard') {
                 return (
                   <Link
@@ -54,6 +53,8 @@ export function BottomNav() {
               <Link
                 key={item.path}
                 to={item.path}
+                aria-current={isActive ? 'page' : undefined}
+                aria-label={item.label}
                 className="relative flex flex-col items-center justify-center gap-1 px-3 py-2"
               >
                 {isActive && (
@@ -72,6 +73,7 @@ export function BottomNav() {
                       'w-5 h-5 transition-colors',
                       isActive ? 'text-primary-500' : 'text-secondary-400'
                     )} 
+                    aria-hidden="true"
                   />
                 </motion.div>
                 <span 

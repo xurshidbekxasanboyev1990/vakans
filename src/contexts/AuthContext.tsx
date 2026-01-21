@@ -2,10 +2,13 @@
 import type { User } from '@/types';
 
 // DEMO MODE - Backend yo'q, localStorage bilan ishlaydi
-const DEMO_MODE = true;
-const STORAGE_KEY = 'vakans_user';
+// Production'da VITE_DEMO_MODE=false qiling
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
+const STORAGE_PREFIX = import.meta.env.VITE_STORAGE_PREFIX || 'vakans_';
+const STORAGE_KEY = `${STORAGE_PREFIX}user`;
 
-// DEMO ACCOUNTLAR
+// DEMO ACCOUNTLAR - WARNING: Development only!
+// Production'da o'chiring yoki environment variable'dan oling
 const DEMO_ACCOUNTS: Record<string, { password: string; user: Omit<User, 'id' | 'createdAt'> }> = {
   '+998901234567': {
     password: 'Worker123',
@@ -15,7 +18,7 @@ const DEMO_ACCOUNTS: Record<string, { password: string; user: Omit<User, 'id' | 
       lastName: 'Karimov',
       role: 'worker',
       region: 'Toshkent',
-      avatar: null,
+      avatar: undefined,
       isVerified: true,
     },
   },
@@ -27,7 +30,7 @@ const DEMO_ACCOUNTS: Record<string, { password: string; user: Omit<User, 'id' | 
       lastName: 'Rahimov',
       role: 'employer',
       region: 'Toshkent',
-      avatar: null,
+      avatar: undefined,
       isVerified: true,
     },
   },
@@ -39,7 +42,7 @@ const DEMO_ACCOUNTS: Record<string, { password: string; user: Omit<User, 'id' | 
       lastName: 'Superuser',
       role: 'admin',
       region: 'Toshkent',
-      avatar: null,
+      avatar: undefined,
       isVerified: true,
     },
   },
@@ -72,7 +75,7 @@ const createDemoUser = (data: { phone: string; firstName: string; lastName?: str
   lastName: data.lastName || '',
   role: data.role,
   region: data.region || 'Toshkent',
-  avatar: null,
+  avatar: undefined,
   isVerified: true,
   createdAt: new Date().toISOString(),
 });

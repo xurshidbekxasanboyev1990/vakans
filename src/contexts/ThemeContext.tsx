@@ -17,13 +17,14 @@ function getSystemTheme(): 'light' | 'dark' {
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'system'
-    return (localStorage.getItem('theme') as Theme) || 'system'
+    if (typeof window === 'undefined') return 'light'
+    return (localStorage.getItem('theme') as Theme) || 'light'
   })
 
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
     if (theme === 'system') return getSystemTheme()
-    return theme
+    if (theme === 'light' || theme === 'dark') return theme
+    return 'light'
   })
 
   useEffect(() => {

@@ -160,3 +160,47 @@ export function NoMessages() {
     />
   )
 }
+
+// EmptyStates.tsx dan ko'chirilgan
+export function EmptyJobs() {
+  return (
+    <EmptyState
+      icon="search"
+      title="Hech qanday ish topilmadi"
+      description="Hozircha sizga mos ish e'lonlari yo'q. Keyinroq qaytib ko'ring yoki qidiruv filterlarini o'zgartiring."
+      action={{
+        label: 'Barcha ishlar',
+        onClick: () => window.location.href = '/jobs',
+      }}
+    />
+  )
+}
+
+export function EmptyUsers() {
+  return (
+    <EmptyState
+      icon="notfound"
+      title="Foydalanuvchilar topilmadi"
+      description="Hozircha foydalanuvchilar ro'yxati bo'sh."
+    />
+  )
+}
+
+export function EmptySearchResults({ onReset }: { onReset?: () => void }) {
+  return (
+    <EmptyState
+      icon="search"
+      title="Natija topilmadi"
+      description="Qidiruv bo'yicha hech narsa topilmadi. Boshqa so'zlar bilan qidirib ko'ring."
+      action={
+        onReset
+          ? {
+              label: 'Tozalash',
+              onClick: onReset,
+              variant: 'outline',
+            }
+          : undefined
+      }
+    />
+  )
+}

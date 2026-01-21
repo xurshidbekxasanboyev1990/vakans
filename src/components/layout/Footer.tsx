@@ -1,26 +1,49 @@
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { Briefcase, Github, Mail, Phone } from 'lucide-react'
 
 export function Footer() {
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1, delayChildren: 0.2 },
+    },
+  }
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  }
+
   return (
     <footer className="bg-secondary-50 dark:bg-secondary-950 border-t border-secondary-200 dark:border-secondary-800">
       <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-4 gap-8"
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-100px' }}
+        >
           {/* Brand */}
-          <div className="md:col-span-1">
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
+          <motion.div className="md:col-span-1" variants={itemVariants}>
+            <Link to="/" className="flex items-center gap-2 mb-4 group">
+              <motion.div 
+                className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center"
+                whileHover={{ scale: 1.1, rotate: 5 }}
+              >
                 <Briefcase className="h-5 w-5 text-white" />
-              </div>
+              </motion.div>
               <span className="text-xl font-bold gradient-text">Vakans.uz</span>
             </Link>
             <p className="text-secondary-600 dark:text-secondary-400 text-sm">
               O'zbekiston ish bozori platformasi. Ish qidiring yoki ishchi toping!
             </p>
-          </div>
+          </motion.div>
 
           {/* Links */}
-          <div>
+          <motion.div variants={itemVariants}>
             <h4 className="font-semibold text-secondary-900 dark:text-secondary-100 mb-4">
               Sahifalar
             </h4>
@@ -41,29 +64,35 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </motion.div>
 
           {/* Legal */}
-          <div>
+          <motion.div variants={itemVariants}>
             <h4 className="font-semibold text-secondary-900 dark:text-secondary-100 mb-4">
               Huquqiy
             </h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/privacy" className="text-secondary-600 dark:text-secondary-400 hover:text-primary-600 transition-colors text-sm">
+                <button 
+                  onClick={() => alert('Maxfiylik siyosati: Barcha ma\'lumotlar himoyalangan. Demo rejim ishlamoqda.')} 
+                  className="text-secondary-600 dark:text-secondary-400 hover:text-primary-600 transition-colors text-sm"
+                >
                   Maxfiylik siyosati
-                </Link>
+                </button>
               </li>
               <li>
-                <Link to="/terms" className="text-secondary-600 dark:text-secondary-400 hover:text-primary-600 transition-colors text-sm">
+                <button 
+                  onClick={() => alert('Foydalanish shartlari: Platformadan foydalanish bepul. Demo rejim ishlamoqda.')} 
+                  className="text-secondary-600 dark:text-secondary-400 hover:text-primary-600 transition-colors text-sm"
+                >
                   Foydalanish shartlari
-                </Link>
+                </button>
               </li>
             </ul>
-          </div>
+          </motion.div>
 
           {/* Contact */}
-          <div>
+          <motion.div variants={itemVariants}>
             <h4 className="font-semibold text-secondary-900 dark:text-secondary-100 mb-4">
               Bog'lanish
             </h4>
@@ -88,8 +117,8 @@ export function Footer() {
                 </a>
               </li>
             </ul>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
         {/* Bottom */}
         <div className="mt-12 pt-8 border-t border-secondary-200 dark:border-secondary-800">

@@ -6,19 +6,21 @@ import { Toaster } from 'sonner'
 import App from './App'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeContext'
+import { ToastProvider } from './components/ui/Toast'
 import './index.css'
 
-// Register service worker for PWA
+// React Router future flags
+const FUTURE_FLAGS = {
+  v7_startTransition: true,
+  v7_relativeSplatPath: true,
+}
+
+// Unregister any existing service workers (cleanup)
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/service-worker.js')
-      .then((registration) => {
-        console.log('SW registered: ', registration)
-      })
-      .catch((registrationError) => {
-        console.log('SW registration failed: ', registrationError)
-      })
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => {
+      registration.unregister()
+    })
   })
 }
 
@@ -35,16 +37,18 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter future={FUTURE_FLAGS}>
         <ThemeProvider>
           <AuthProvider>
-            <App />
-            <Toaster 
-              position="top-center" 
-              richColors 
-              closeButton
-              theme="system"
-            />
+            <ToastProvider>
+              <App />
+              <Toaster 
+                position="top-center" 
+                richColors 
+                closeButton
+                theme="system"
+              />
+            </ToastProvider>
           </AuthProvider>
         </ThemeProvider>
       </BrowserRouter>

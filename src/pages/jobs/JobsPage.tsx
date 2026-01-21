@@ -7,7 +7,8 @@ import { formatSalary, formatRelativeTime } from '@/lib/utils';
 import { useDebounce } from '@/hooks';
 import { JobCardSkeleton, NoJobsFound, Card } from '@/components/ui';
 import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 export function JobsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -53,7 +54,7 @@ export function JobsPage() {
           setTotalPages(res.pagination?.totalPages || 1);
         }
       } catch (error) {
-        console.error('Error fetching jobs:', error);
+        logger.error('Error fetching jobs', error, { component: 'JobsPage' });
         toast.error('Ishlarni yuklashda xatolik yuz berdi');
       } finally {
         setIsLoading(false);

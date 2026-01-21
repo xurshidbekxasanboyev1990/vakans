@@ -41,20 +41,20 @@ export interface Job {
   categoryId?: string;
   title: string;
   description: string;
-  requirements?: string;
+  requirements?: string | string[];
   salaryMin?: number;
   salaryMax?: number;
-  salaryType: SalaryType;
-  currency: string;
+  salaryType?: SalaryType;
+  currency?: string;
   location?: string;
-  region: string;
+  region?: string;
   address?: string;
   type?: string;
   workType: WorkType;
   experienceRequired?: string;
   educationRequired?: string;
   languagesRequired?: string[];
-  benefits?: string;
+  benefits?: string | string[];
   contactPhone?: string;
   contactEmail?: string;
   isFeatured: boolean;
@@ -111,10 +111,12 @@ export interface Category {
   nameUz?: string;
   nameRu?: string;
   nameEn?: string;
+  slug?: string;
   icon?: string;
   color?: string;
-  jobCount: number;
-  isActive: boolean;
+  jobCount?: number;
+  jobsCount?: number;
+  isActive?: boolean;
 }
 
 // Chat Types
@@ -148,12 +150,16 @@ export interface ChatMessage {
 
 // Notification Types
 export type NotificationType = 
+  | 'application' 
   | 'application_received' 
   | 'application_accepted' 
   | 'application_rejected' 
+  | 'message'
   | 'new_message' 
+  | 'job_match'
   | 'job_expired' 
   | 'job_approved'
+  | 'reminder'
   | 'system';
 
 export interface Notification {
@@ -165,6 +171,7 @@ export interface Notification {
   data?: Record<string, unknown>;
   isRead: boolean;
   createdAt: string;
+  updatedAt?: string;
 }
 
 // Dashboard Stats

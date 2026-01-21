@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usersApi } from '@/lib/api';
 import { User, Camera, Mail, Phone, MapPin, Save, Edit2 } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 
 export function ProfilePage() {

@@ -1,9 +1,12 @@
 import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, Sun, Moon, Bell, MessageSquare, LogOut, User, Settings, Briefcase } from 'lucide-react'
-import { useState } from 'react'
+import { Menu, X, Sun, Moon, Bell, LogOut, User, Settings, Briefcase } from 'lucide-react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Button, Avatar } from '@/components/ui'
+import { useRealTimeNotifications } from '@/hooks/useRealTimeNotifications'
+import { notificationsApi } from '@/lib/api'
 
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth()
@@ -11,6 +14,63 @@ export function Header() {
   const navigate = useNavigate()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const profileDropdownRef = useRef<HTMLDivElement>(null)
+  
+  // Real-time notifications
+  const { isConnected, newNotification } = useRealTimeNotifications()
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10)
+    }
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Close dropdown on Escape key
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsProfileOpen(false)
+        setIsMenuOpen(false)
+      }
+    }
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [])
+
+  // Fetch unread count
+  const fetchUnreadCount = useCallback(async () => {
+    try {
+      if (import.meta.env.VITE_DEMO_MODE === 'true') {
+        // Demo mode - static count
+        setUnreadCount(2)
+      } else {
+        const response = await notificationsApi.getUnreadCount()
+        if (response.success && response.data) {
+          setUnreadCount(response.data.count)
+        }
+      }
+    } catch {
+      // Silent fail - network error
+    }
+  }, [])
+
+  // Fetch unread count on mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchUnreadCount()
+    }
+  }, [isAuthenticated, fetchUnreadCount])
+
+  // Update count when new notification arrives
+  useEffect(() => {
+    if (newNotification) {
+      setUnreadCount(prev => prev + 1)
+    }
+  }, [newNotification])
 
   const handleLogout = async () => {
     await logout()
@@ -22,14 +82,27 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 w-full glass border-b border-secondary-200/50 dark:border-secondary-800/50">
+    <motion.header 
+      initial={{ y: -100 }}
+      animate={{ y: 0 }}
+      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+        isScrolled 
+          ? 'bg-white/90 dark:bg-secondary-900/90 backdrop-blur-xl border-b border-secondary-200/50 dark:border-secondary-800/50 shadow-lg shadow-black/5' 
+          : 'bg-transparent'
+      }`}
+    >
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
+          <Link to="/" className="flex items-center gap-2 group">
+            <motion.div 
+              className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center"
+              whileHover={{ scale: 1.1, rotate: 5 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+            >
               <Briefcase className="h-5 w-5 text-white" />
-            </div>
+            </motion.div>
             <span className="text-xl font-bold gradient-text">Vakans.uz</span>
           </Link>
 
@@ -43,10 +116,10 @@ export function Header() {
             </Link>
             {isAuthenticated && user?.role === 'employer' && (
               <Link
-                to="/employer"
+                to="/dashboard"
                 className="text-secondary-600 dark:text-secondary-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
               >
-                Ish e'lon qilish
+                Boshqaruv paneli
               </Link>
             )}
           </nav>
@@ -54,36 +127,61 @@ export function Header() {
           {/* Right Side */}
           <div className="flex items-center gap-3">
             {/* Theme Toggle */}
-            <button
+            <motion.button
               onClick={toggleTheme}
               className="p-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
               aria-label="Temani o'zgartirish"
+              whileHover={{ scale: 1.1, rotate: 15 }}
+              whileTap={{ scale: 0.9 }}
             >
-              {resolvedTheme === 'dark' ? (
-                <Sun className="h-5 w-5 text-secondary-500" />
-              ) : (
-                <Moon className="h-5 w-5 text-secondary-500" />
-              )}
-            </button>
+              <AnimatePresence mode="wait" initial={false}>
+                <motion.div
+                  key={resolvedTheme}
+                  initial={{ y: -20, opacity: 0, rotate: -180 }}
+                  animate={{ y: 0, opacity: 1, rotate: 0 }}
+                  exit={{ y: 20, opacity: 0, rotate: 180 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {resolvedTheme === 'dark' ? (
+                    <Sun className="h-5 w-5 text-secondary-500" />
+                  ) : (
+                    <Moon className="h-5 w-5 text-secondary-500" />
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </motion.button>
 
             {isAuthenticated ? (
               <>
                 {/* Notifications */}
-                <button 
-                  className="relative p-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
-                  aria-label="Bildirishnomalar"
-                >
-                  <Bell className="h-5 w-5 text-secondary-500" />
-                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" aria-hidden="true" />
-                </button>
-
-                {/* Messages */}
-                <button 
-                  className="relative p-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
-                  aria-label="Xabarlar"
-                >
-                  <MessageSquare className="h-5 w-5 text-secondary-500" />
-                </button>
+                <Link to="/notifications">
+                  <motion.button 
+                    className="relative p-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
+                    aria-label="Bildirishnomalar"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Bell className="h-5 w-5 text-secondary-500" />
+                    {unreadCount > 0 && (
+                      <motion.span 
+                        className="absolute -top-0.5 -right-0.5 min-w-[20px] h-5 px-1.5 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-[10px] font-bold text-white shadow-lg shadow-red-500/50" 
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                      >
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </motion.span>
+                    )}
+                    {isConnected && (
+                      <motion.div
+                        className="absolute bottom-1 right-1 h-2 w-2 rounded-full bg-green-500"
+                        animate={{ opacity: [1, 0.5, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        title="Real-time ulanish aktiv"
+                      />
+                    )}
+                  </motion.button>
+                </Link>
 
                 {/* Profile Dropdown */}
                 <div className="relative">
@@ -101,45 +199,56 @@ export function Header() {
                     </span>
                   </button>
 
-                  {isProfileOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setIsProfileOpen(false)}
-                      />
-                      <div className="absolute right-0 top-full mt-2 w-56 rounded-xl bg-white dark:bg-secondary-900 shadow-xl border border-secondary-200 dark:border-secondary-800 py-2 z-50 animate-slide-down">
-                        <div className="px-4 py-2 border-b border-secondary-100 dark:border-secondary-800">
-                          <p className="font-medium text-secondary-900 dark:text-secondary-100">
-                            {user?.firstName} {user?.lastName}
-                          </p>
-                          <p className="text-sm text-secondary-500">{user?.phone}</p>
-                        </div>
-                        <Link
-                          to="/profile"
-                          className="flex items-center gap-3 px-4 py-2.5 text-secondary-700 dark:text-secondary-300 hover:bg-secondary-50 dark:hover:bg-secondary-800"
+                  <AnimatePresence>
+                    {isProfileOpen && (
+                      <>
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="fixed inset-0 z-40"
                           onClick={() => setIsProfileOpen(false)}
+                        />
+                        <motion.div 
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          transition={{ duration: 0.2 }}
+                          className="absolute right-0 top-full mt-2 w-56 rounded-xl bg-white dark:bg-secondary-900 shadow-xl border border-secondary-200 dark:border-secondary-800 py-2 z-50"
                         >
-                          <User className="h-4 w-4" />
-                          Profil
-                        </Link>
-                        <Link
-                          to="/settings"
-                          className="flex items-center gap-3 px-4 py-2.5 text-secondary-700 dark:text-secondary-300 hover:bg-secondary-50 dark:hover:bg-secondary-800"
-                          onClick={() => setIsProfileOpen(false)}
-                        >
-                          <Settings className="h-4 w-4" />
-                          Sozlamalar
-                        </Link>
-                        <button
-                          onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          <LogOut className="h-4 w-4" />
-                          Chiqish
-                        </button>
-                      </div>
-                    </>
-                  )}
+                          <div className="px-4 py-2 border-b border-secondary-100 dark:border-secondary-800">
+                            <p className="font-medium text-secondary-900 dark:text-secondary-100">
+                              {user?.firstName} {user?.lastName}
+                            </p>
+                            <p className="text-sm text-secondary-500">{user?.phone}</p>
+                          </div>
+                          <Link
+                            to="/profile"
+                            className="flex items-center gap-3 px-4 py-2.5 text-secondary-700 dark:text-secondary-300 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            <User className="h-4 w-4" />
+                            Profil
+                          </Link>
+                          <Link
+                            to="/settings"
+                            className="flex items-center gap-3 px-4 py-2.5 text-secondary-700 dark:text-secondary-300 hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors"
+                            onClick={() => setIsProfileOpen(false)}
+                          >
+                            <Settings className="h-4 w-4" />
+                            Sozlamalar
+                          </Link>
+                          <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                          >
+                            <LogOut className="h-4 w-4" />
+                            Chiqish
+                          </button>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
                 </div>
               </>
             ) : (
@@ -170,38 +279,52 @@ export function Header() {
         </div>
 
         {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-secondary-200 dark:border-secondary-800 animate-slide-down">
-            <nav className="flex flex-col gap-2">
-              <Link
-                to="/jobs"
-                className="px-4 py-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Ishlar
-              </Link>
-              {!isAuthenticated && (
-                <>
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+              className="md:hidden border-t border-secondary-200 dark:border-secondary-800 overflow-hidden"
+            >
+              <nav className="flex flex-col gap-2 py-4">
+                <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
                   <Link
-                    to="/login"
-                    className="px-4 py-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
+                    to="/jobs"
+                    className="block px-4 py-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
                     onClick={() => setIsMenuOpen(false)}
                   >
-                    Kirish
+                    Ishlar
                   </Link>
-                  <Link
-                    to="/register"
-                    className="px-4 py-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Ro'yxatdan o'tish
-                  </Link>
-                </>
-              )}
-            </nav>
-          </div>
-        )}
+                </motion.div>
+                {!isAuthenticated && (
+                  <>
+                    <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
+                      <Link
+                        to="/login"
+                        className="block px-4 py-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Kirish
+                      </Link>
+                    </motion.div>
+                    <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
+                      <Link
+                        to="/register"
+                        className="block px-4 py-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Ro'yxatdan o'tish
+                      </Link>
+                    </motion.div>
+                  </>
+                )}
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-    </header>
+    </motion.header>
   )
 }

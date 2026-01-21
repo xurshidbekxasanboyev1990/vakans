@@ -8,28 +8,30 @@ import type {
 // DEMO MODE - No backend required
 // ============================================
 
-const DEMO_MODE = true; // Set to false when backend is ready
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
-// Demo users
+// Demo users - WARNING: For development only!
+// In production, remove this and use real authentication
+// Parollar: Worker123, Employer123, Admin123
 const DEMO_USERS: Record<string, User & { password: string }> = {
-  'worker': {
+  '+998901234567': {
     id: '1',
     phone: '+998901234567',
-    password: '12345678',
-    firstName: 'Ali',
-    lastName: 'Valiyev',
+    password: 'Worker123',
+    firstName: 'Aziz',
+    lastName: 'Karimov',
     role: 'worker',
     avatar: '',
     region: 'Toshkent',
     isVerified: true,
     createdAt: new Date().toISOString(),
   },
-  'employer': {
+  '+998901111111': {
     id: '2', 
-    phone: '+998901234568',
-    password: '12345678',
-    firstName: 'Sardor',
-    lastName: 'Karimov',
+    phone: '+998901111111',
+    password: 'Employer123',
+    firstName: 'Jasur',
+    lastName: 'Rahimov',
     role: 'employer',
     avatar: '',
     region: 'Toshkent',
@@ -37,12 +39,12 @@ const DEMO_USERS: Record<string, User & { password: string }> = {
     isVerified: true,
     createdAt: new Date().toISOString(),
   },
-  'admin': {
+  '+998900000000': {
     id: '3',
-    phone: '+998901234569',
-    password: '12345678',
+    phone: '+998900000000',
+    password: 'Admin123',
     firstName: 'Admin',
-    lastName: 'User',
+    lastName: 'Superuser',
     role: 'admin',
     avatar: '',
     region: 'Toshkent',
@@ -203,9 +205,10 @@ const saveStoredUsers = (users: Record<string, User & { password: string }>) => 
 // ============================================
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
+const API_VERSION = import.meta.env.VITE_API_VERSION || 'v1';
 
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: API_URL,
+  baseURL: `${API_URL}/${API_VERSION}`,
   timeout: 30000,
   withCredentials: true,
   headers: {
@@ -552,6 +555,20 @@ export const jobsApi = {
   },
 
   save: async (id: string): Promise<ApiResponse<{ saved: boolean }>> => {
+    if (DEMO_MODE) {
+      await delay(200);
+      // Demo - localStorage da saqlash
+      const savedJobs = JSON.parse(localStorage.getItem('demo_saved_jobs') || '[]');
+      const index = savedJobs.indexOf(id);
+      if (index > -1) {
+        savedJobs.splice(index, 1);
+      } else {
+        savedJobs.push(id);
+      }
+      localStorage.setItem('demo_saved_jobs', JSON.stringify(savedJobs));
+      return { success: true, data: { saved: index === -1 } };
+    }
+    
     try {
       const { data } = await axiosInstance.post<ApiResponse<{ saved: boolean }>>(`/jobs/${id}/save`);
       return data;
@@ -561,6 +578,13 @@ export const jobsApi = {
   },
 
   getSaved: async (): Promise<ApiResponse<Job[]>> => {
+    if (DEMO_MODE) {
+      await delay(200);
+      const savedJobIds = JSON.parse(localStorage.getItem('demo_saved_jobs') || '[]');
+      const savedJobs = DEMO_JOBS.filter(job => savedJobIds.includes(job.id));
+      return { success: true, data: savedJobs };
+    }
+    
     try {
       const { data } = await axiosInstance.get<ApiResponse<Job[]>>('/jobs/saved');
       return data;
@@ -585,6 +609,31 @@ export const jobsApi = {
 
 export const applicationsApi = {
   apply: async (jobId: string, coverLetter?: string): Promise<ApiResponse<Application>> => {
+    if (DEMO_MODE) {
+      await delay(300);
+      const user = getStoredUser();
+      if (!user) {
+        return { success: false, error: 'Tizimga kiring' };
+      }
+      const job = DEMO_JOBS.find(j => j.id === jobId);
+      const newApplication: Application = {
+        id: 'app-' + Date.now(),
+        jobId,
+        workerId: user.id,
+        coverLetter,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        jobTitle: job?.title,
+        companyName: job?.employerName,
+        employerName: job?.employerName,
+      };
+      // Store in localStorage
+      const applications = JSON.parse(localStorage.getItem('demo_applications') || '[]');
+      applications.unshift(newApplication);
+      localStorage.setItem('demo_applications', JSON.stringify(applications));
+      return { success: true, data: newApplication };
+    }
+    
     try {
       const { data } = await axiosInstance.post<ApiResponse<Application>>('/applications', { jobId, coverLetter });
       return data;
@@ -594,6 +643,32 @@ export const applicationsApi = {
   },
 
   getMyApplications: async (params?: { status?: string; page?: number; limit?: number }): Promise<ApplicationsResponse> => {
+    if (DEMO_MODE) {
+      await delay(200);
+      const user = getStoredUser();
+      if (!user) {
+        return { success: true, data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
+      }
+      let applications: Application[] = JSON.parse(localStorage.getItem('demo_applications') || '[]');
+      
+      // Filter by status if provided
+      if (params?.status) {
+        applications = applications.filter(app => app.status === params.status);
+      }
+      
+      const page = params?.page || 1;
+      const limit = params?.limit || 10;
+      const total = applications.length;
+      const start = (page - 1) * limit;
+      const paginatedApps = applications.slice(start, start + limit);
+      
+      return {
+        success: true,
+        data: paginatedApps,
+        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+      };
+    }
+    
     try {
       const { data } = await axiosInstance.get<ApplicationsResponse>('/applications/my', { params });
       return data;
@@ -705,6 +780,11 @@ export const usersApi = {
 
 export const categoriesApi = {
   getAll: async (): Promise<ApiResponse<Category[]>> => {
+    if (DEMO_MODE) {
+      await delay(200);
+      return { success: true, data: DEMO_CATEGORIES };
+    }
+    
     try {
       const { data } = await axiosInstance.get<ApiResponse<Category[]>>('/categories');
       return data;

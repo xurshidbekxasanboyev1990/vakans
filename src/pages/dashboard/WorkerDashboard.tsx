@@ -4,7 +4,8 @@ import { jobsApi, applicationsApi } from '@/lib/api';
 import { Job, Application } from '@/types';
 import { Search, Bookmark, FileText, Clock, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 export function WorkerDashboard() {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -24,7 +25,7 @@ export function WorkerDashboard() {
         if (savedRes.success) setSavedJobs(savedRes.data || []);
         if (jobsRes.success) setRecommendedJobs(jobsRes.data || []);
       } catch (error) {
-        console.error('Error fetching worker data:', error);
+        logger.error('Error fetching worker data', error, { component: 'WorkerDashboard' });
         toast.error('Ma\'lumotlarni yuklashda xatolik yuz berdi');
       } finally {
         setIsLoading(false);
@@ -77,10 +78,10 @@ export function WorkerDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {[
-            { title: 'Jami arizalar', value: applications.length, icon: FileText, color: 'blue' },
-            { title: 'Kutilayotgan', value: pendingApplications, icon: Clock, color: 'yellow' },
-            { title: 'Qabul qilingan', value: acceptedApplications, icon: CheckCircle, color: 'green' },
-            { title: 'Saqlangan ishlar', value: savedJobs.length, icon: Bookmark, color: 'purple' },
+            { title: 'Jami arizalar', value: applications.length, icon: FileText, bgColor: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-500' },
+            { title: 'Kutilayotgan', value: pendingApplications, icon: Clock, bgColor: 'bg-yellow-100 dark:bg-yellow-900/30', iconColor: 'text-yellow-500' },
+            { title: 'Qabul qilingan', value: acceptedApplications, icon: CheckCircle, bgColor: 'bg-green-100 dark:bg-green-900/30', iconColor: 'text-green-500' },
+            { title: 'Saqlangan ishlar', value: savedJobs.length, icon: Bookmark, bgColor: 'bg-purple-100 dark:bg-purple-900/30', iconColor: 'text-purple-500' },
           ].map((stat, index) => (
             <motion.div
               key={stat.title}
@@ -94,8 +95,8 @@ export function WorkerDashboard() {
                   <p className="text-sm text-secondary-500">{stat.title}</p>
                   <p className="text-3xl font-bold text-secondary-900 dark:text-white mt-1">{stat.value}</p>
                 </div>
-                <div className={`w-12 h-12 bg-${stat.color}-100 dark:bg-${stat.color}-900/30 rounded-xl flex items-center justify-center`}>
-                  <stat.icon className={`w-6 h-6 text-${stat.color}-500`} />
+                <div className={`w-12 h-12 ${stat.bgColor} rounded-xl flex items-center justify-center`}>
+                  <stat.icon className={`w-6 h-6 ${stat.iconColor}`} />
                 </div>
               </div>
             </motion.div>
@@ -109,7 +110,12 @@ export function WorkerDashboard() {
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-secondary-900 dark:text-white">Mening arizalarim</h2>
-              <Link to="/worker/applications" className="text-primary-500 text-sm hover:underline font-medium">Barchasini ko'rish</Link>
+              <button 
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
+                className="text-primary-500 text-sm hover:underline font-medium"
+              >
+                Yuqoriga
+              </button>
             </div>
             <div className="space-y-3">
               {applications.slice(0, 5).map((app, index) => (
@@ -168,7 +174,7 @@ export function WorkerDashboard() {
                         <h3 className="font-medium text-secondary-900 dark:text-white">{job.title}</h3>
                         <p className="text-sm text-secondary-500">{job.employerName} - {job.location}</p>
                       </div>
-                      <span className="text-primary-500 font-semibold text-sm">{job.salaryMin?.toLocaleString()} so'm</span>
+                      <span className="text-primary-500 font-semibold text-sm">{job.salaryMin?.toLocaleString() || 'N/A'} so'm</span>
                     </div>
                   </Link>
                 </motion.div>

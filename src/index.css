@@ -62,7 +62,11 @@
 
 @layer utilities {
   .glass {
-    @apply bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl;
+    @apply bg-white/70 dark:bg-secondary-900/70 backdrop-blur-xl backdrop-saturate-150;
+  }
+  
+  .glass-strong {
+    @apply bg-white/90 dark:bg-secondary-900/90 backdrop-blur-2xl backdrop-saturate-200;
   }
   
   .gradient-primary {
@@ -82,22 +86,36 @@
   }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - Apple style */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-secondary-100 dark:bg-secondary-800;
+  @apply bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-secondary-300 dark:bg-secondary-600 rounded-full;
+  @apply bg-secondary-300/60 dark:bg-secondary-600/60 rounded-full;
+  transition: background-color 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-secondary-400 dark:bg-secondary-500;
+  @apply bg-secondary-400/80 dark:bg-secondary-500/80;
+}
+
+/* Thin scrollbar for sidebar */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  @apply bg-secondary-300/40 dark:bg-secondary-700/40 rounded-full;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  @apply bg-secondary-400/60 dark:bg-secondary-600/60;
 }
 
 /* Focus styles */
@@ -148,6 +166,68 @@
 /* Apple-style smooth scrolling */
 html {
   scroll-behavior: smooth;
+}
+
+/* Shimmer effect for skeleton loaders */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  animation: shimmer 2s infinite linear;
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.05) 0%,
+    rgba(0, 0, 0, 0.1) 50%,
+    rgba(0, 0, 0, 0.05) 100%
+  );
+  background-size: 1000px 100%;
+}
+
+.dark .shimmer {
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.02) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
+  background-size: 1000px 100%;
+}
+
+/* Ripple effect */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  animation: ripple 0.6s ease-out;
+  pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -4,7 +4,8 @@ import { jobsApi, applicationsApi } from '@/lib/api';
 import { Job, Application } from '@/types';
 import { Briefcase, Users, Eye, Plus, Clock } from 'lucide-react';
 import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
+import { logger } from '@/lib/logger';
 
 export function EmployerDashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -21,7 +22,7 @@ export function EmployerDashboard() {
         if (jobsRes.success) setJobs(jobsRes.data || []);
         if (appsRes.success) setApplications(appsRes.data || []);
       } catch (error) {
-        console.error('Error fetching employer data:', error);
+        logger.error('Error fetching employer data', error, { component: 'EmployerDashboard' });
         toast.error('Ma\'lumotlarni yuklashda xatolik yuz berdi');
       } finally {
         setIsLoading(false);
@@ -66,19 +67,19 @@ export function EmployerDashboard() {
         <motion.div variants={itemVariants} className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold text-secondary-900 dark:text-white">Ish beruvchi paneli</h1>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Link to="/jobs/create" className="inline-flex items-center px-5 py-3 bg-primary-500 text-white rounded-xl hover:bg-primary-600 font-medium shadow-lg shadow-primary-500/25 transition-all">
+            <Link to="/jobs" className="inline-flex items-center px-5 py-3 bg-primary-500 text-white rounded-xl hover:bg-primary-600 font-medium shadow-lg shadow-primary-500/25 transition-all">
               <Plus className="w-5 h-5 mr-2" />
-              Yangi ish
+              Ishlarni ko'rish
             </Link>
           </motion.div>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           {[
-            { title: 'Faol ishlar', value: activeJobs, icon: Briefcase, color: 'green' },
-            { title: 'Kutilayotgan arizalar', value: pendingApplications, icon: Clock, color: 'yellow' },
-            { title: 'Jami ko\'rishlar', value: totalViews, icon: Eye, color: 'blue' },
-            { title: 'Jami arizalar', value: applications.length, icon: Users, color: 'purple' },
+            { title: 'Faol ishlar', value: activeJobs, icon: Briefcase, bgColor: 'bg-green-100 dark:bg-green-900/30', iconColor: 'text-green-500' },
+            { title: 'Kutilayotgan arizalar', value: pendingApplications, icon: Clock, bgColor: 'bg-yellow-100 dark:bg-yellow-900/30', iconColor: 'text-yellow-500' },
+            { title: 'Jami ko\'rishlar', value: totalViews, icon: Eye, bgColor: 'bg-blue-100 dark:bg-blue-900/30', iconColor: 'text-blue-500' },
+            { title: 'Jami arizalar', value: applications.length, icon: Users, bgColor: 'bg-purple-100 dark:bg-purple-900/30', iconColor: 'text-purple-500' },
           ].map((stat, index) => (
             <motion.div
               key={stat.title}
@@ -92,8 +93,8 @@ export function EmployerDashboard() {
                   <p className="text-sm text-secondary-500">{stat.title}</p>
                   <p className="text-3xl font-bold text-secondary-900 dark:text-white mt-1">{stat.value}</p>
                 </div>
-                <div className={`w-12 h-12 bg-${stat.color}-100 dark:bg-${stat.color}-900/30 rounded-xl flex items-center justify-center`}>
-                  <stat.icon className={`w-6 h-6 text-${stat.color}-500`} />
+                <div className={`w-12 h-12 ${stat.bgColor} rounded-xl flex items-center justify-center`}>
+                  <stat.icon className={`w-6 h-6 ${stat.iconColor}`} />
                 </div>
               </div>
             </motion.div>
@@ -107,7 +108,12 @@ export function EmployerDashboard() {
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-secondary-900 dark:text-white">Mening ishlarim</h2>
-              <Link to="/employer/jobs" className="text-primary-500 text-sm hover:underline font-medium">Barchasini ko'rish</Link>
+              <button 
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
+                className="text-primary-500 text-sm hover:underline font-medium"
+              >
+                Yuqoriga
+              </button>
             </div>
             <div className="space-y-3">
               {jobs.slice(0, 5).map((job, index) => (
@@ -151,7 +157,12 @@ export function EmployerDashboard() {
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-secondary-900 dark:text-white">Oxirgi arizalar</h2>
-              <Link to="/employer/applications" className="text-primary-500 text-sm hover:underline font-medium">Barchasini ko'rish</Link>
+              <button 
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} 
+                className="text-primary-500 text-sm hover:underline font-medium"
+              >
+                Yuqoriga
+              </button>
             </div>
             <div className="space-y-3">
               {applications.slice(0, 5).map((app, index) => (
@@ -164,7 +175,7 @@ export function EmployerDashboard() {
                 >
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-medium text-secondary-900 dark:text-white">{app.workerName || app.applicantName}</h3>
+                      <h3 className="font-medium text-secondary-900 dark:text-white">{app.workerName || app.applicantName || 'Noma\'lum'}</h3>
                       <p className="text-sm text-secondary-500">{app.jobTitle}</p>
                     </div>
                     <span className={`px-3 py-1 text-xs font-medium rounded-lg ${

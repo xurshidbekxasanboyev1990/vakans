@@ -5,8 +5,9 @@ import { Job } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import { MapPin, Clock, Briefcase, DollarSign, Calendar, Eye, Bookmark, Share2, ArrowLeft, Send, CheckCircle } from 'lucide-react';
 import { formatSalary, formatDate } from '@/lib/utils';
-import { toast } from 'react-hot-toast';
+import { toast } from 'sonner';
 import { motion } from 'framer-motion';
+import { logger } from '@/lib/logger';
 
 export function JobDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,7 +33,7 @@ export function JobDetailPage() {
           navigate('/jobs');
         }
       } catch (error) {
-        console.error('Error fetching job:', error);
+        logger.error('Error fetching job', error, { component: 'JobDetailPage', jobId: id });
         navigate('/jobs');
       } finally {
         setIsLoading(false);
