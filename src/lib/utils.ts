@@ -95,13 +95,24 @@ export function getFileUrl(path?: string | null): string | undefined {
   if (path.startsWith('http://') || path.startsWith('https://')) {
     return path;
   }
-  // Backend API URL
-  const apiBaseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
-  // Agar localhost bo'lmasa (tarmoqdan kirish), dinamik URL yasash
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    return `http://${window.location.hostname}:5000${path.startsWith('/') ? path : '/' + path}`;
+  
+  // Production domain - nginx orqali (port kerak emas)
+  if (typeof window !== 'undefined') {
+    const { hostname, protocol } = window.location;
+    
+    // Production yoki server IP - port kerak emas
+    if (hostname === 'vakans.uz' || hostname === 'www.vakans.uz' || hostname === '77.237.239.235') {
+      return `${protocol}//${hostname}${path.startsWith('/') ? path : '/' + path}`;
+    }
+    
+    // Development - port kerak
+    if (hostname !== 'localhost') {
+      return `http://${hostname}:5000${path.startsWith('/') ? path : '/' + path}`;
+    }
   }
+  
   // Localhost uchun
+  const apiBaseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
   if (apiBaseUrl) {
     return `${apiBaseUrl.replace('/api', '')}${path.startsWith('/') ? path : '/' + path}`;
   }
