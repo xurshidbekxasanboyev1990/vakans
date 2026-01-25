@@ -14,12 +14,16 @@ export class UploadService {
     private baseUrl: string;
 
     constructor(private configService: ConfigService) {
-        this.uploadDir = this.configService.get<string>('UPLOAD_DIR') || './uploads';
+        // Production da /app/uploads, development da ./uploads
+        const defaultUploadDir = process.env.NODE_ENV === 'production' ? '/app/uploads' : './uploads';
+        this.uploadDir = this.configService.get<string>('UPLOAD_DIR') || defaultUploadDir;
         // Backend 5000 portda ishlaydi
         this.baseUrl = this.configService.get<string>('BASE_URL') || 'http://localhost:5000';
 
-        // Ensure upload directory exists
-        this.ensureUploadDir();
+        // Ensure upload directory exists (only in development)
+        if (process.env.NODE_ENV !== 'production') {
+            this.ensureUploadDir();
+        }
     }
 
     // ===========================================
