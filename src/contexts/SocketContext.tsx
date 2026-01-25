@@ -12,16 +12,16 @@ import { toast } from 'sonner';
 // Production and development Socket URL
 const getSocketUrl = () => {
     if (typeof window !== 'undefined') {
-        const hostname = window.location.hostname;
+        const { hostname, protocol } = window.location;
 
-        // Production domain
+        // Production domain - use same origin (nginx will proxy)
         if (hostname === 'vakans.uz' || hostname === 'www.vakans.uz') {
-            return 'https://vakans.uz';
+            return `${protocol}//${hostname}`;
         }
 
         // Server IP
         if (hostname === '77.237.239.235') {
-            return 'http://77.237.239.235:5000';
+            return `${protocol}//${hostname}`;
         }
 
         // Other network IPs (dev)
