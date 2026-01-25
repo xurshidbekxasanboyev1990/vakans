@@ -48,6 +48,10 @@ RUN apk add --no-cache libc6-compat openssl dumb-init
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nestjs
 
+# Create uploads directory with proper permissions
+RUN mkdir -p /app/uploads/avatars /app/uploads/documents /app/uploads/images && \
+    chown -R nestjs:nodejs /app/uploads
+
 # Copy built application
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
@@ -71,5 +75,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
 
-# Start the application
-CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed || true && node dist/src/main.js"]
+# Start the application (skip seed in production)
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
