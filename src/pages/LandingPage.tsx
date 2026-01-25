@@ -41,9 +41,21 @@ export function LandingPage() {
     offset: ["start start", "end start"]
   })
 
-  const y = useTransform(scrollYProgress, [0, 1], [0, 200])
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0])
-  const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.95])
+  // Check if user prefers reduced motion or is on mobile
+  const [isMobile, setIsMobile] = useState(false)
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768 || window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  const y = useTransform(scrollYProgress, [0, 1], [0, isMobile ? 0 : 200])
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, isMobile ? 1 : 0])
+  const scale = useTransform(scrollYProgress, [0, 0.5], [1, isMobile ? 1 : 0.95])
 
   // Real data from API
   const [stats, setStats] = useState<PublicStats>({
@@ -85,49 +97,49 @@ export function LandingPage() {
     return num > 0 ? `${num}+` : '0'
   }
 
-  // Apple-style stagger animation
+  // Apple-style stagger animation - faster on mobile
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.15,
-        delayChildren: 0.3,
+        staggerChildren: isMobile ? 0.05 : 0.15,
+        delayChildren: isMobile ? 0 : 0.3,
       },
     },
   }
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 60 },
+    hidden: { opacity: 0, y: isMobile ? 20 : 60 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.8,
+        duration: isMobile ? 0.3 : 0.8,
         ease: "easeOut" as const,
       },
     },
   }
 
   const fadeInUp = {
-    hidden: { opacity: 0, y: 40 },
+    hidden: { opacity: 0, y: isMobile ? 15 : 40 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        duration: 0.6,
+        duration: isMobile ? 0.25 : 0.6,
         ease: "easeOut" as const,
       },
     },
   }
 
   const scaleIn = {
-    hidden: { opacity: 0, scale: 0.8 },
+    hidden: { opacity: 0, scale: isMobile ? 0.95 : 0.8 },
     visible: {
       opacity: 1,
       scale: 1,
       transition: {
-        duration: 0.6,
+        duration: isMobile ? 0.25 : 0.6,
         ease: "easeOut" as const,
       },
     },
@@ -143,31 +155,39 @@ export function LandingPage() {
         {/* Animated gradient background */}
         <div className="absolute inset-0 bg-gradient-to-b from-primary-50 via-white to-white dark:from-secondary-900 dark:via-secondary-950 dark:to-secondary-950" />
 
-        {/* Floating gradient orbs - Apple style */}
-        <motion.div
-          className="absolute top-1/4 -left-32 w-96 h-96 bg-gradient-to-r from-primary-400/30 to-purple-400/30 rounded-full blur-3xl"
-          animate={{
-            x: [0, 50, 0],
-            y: [0, 30, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-        <motion.div
-          className="absolute bottom-1/4 -right-32 w-96 h-96 bg-gradient-to-r from-blue-400/30 to-cyan-400/30 rounded-full blur-3xl"
-          animate={{
-            x: [0, -50, 0],
-            y: [0, -30, 0],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
+        {/* Floating gradient orbs - Apple style (disabled on mobile for performance) */}
+        {!isMobile && (
+          <>
+            <motion.div
+              className="absolute top-1/4 -left-32 w-96 h-96 bg-gradient-to-r from-primary-400/30 to-purple-400/30 rounded-full blur-3xl"
+              animate={{
+                x: [0, 50, 0],
+                y: [0, 30, 0],
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+            <motion.div
+              className="absolute bottom-1/4 -right-32 w-96 h-96 bg-gradient-to-r from-blue-400/30 to-cyan-400/30 rounded-full blur-3xl"
+              animate={{
+                x: [0, -50, 0],
+                y: [0, -30, 0],
+              }}
+              transition={{
+                duration: 10,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+          </>
+        )}
+        {/* Static gradient for mobile */}
+        {isMobile && (
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-gradient-to-r from-primary-400/20 to-purple-400/20 rounded-full blur-3xl" />
+        )}
 
         <motion.div
           style={{ y, opacity, scale }}
@@ -287,20 +307,22 @@ export function LandingPage() {
           </motion.div>
         </motion.div>
 
-        {/* Scroll indicator */}
-        <motion.div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <div className="w-6 h-10 border-2 border-secondary-300 dark:border-secondary-700 rounded-full flex items-start justify-center p-2">
-            <motion.div
-              className="w-1.5 h-1.5 bg-secondary-400 rounded-full"
-              animate={{ y: [0, 12, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-          </div>
-        </motion.div>
+        {/* Scroll indicator - hidden on mobile */}
+        {!isMobile && (
+          <motion.div
+            className="absolute bottom-8 left-1/2 -translate-x-1/2 hidden md:block"
+            animate={{ y: [0, 10, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            <div className="w-6 h-10 border-2 border-secondary-300 dark:border-secondary-700 rounded-full flex items-start justify-center p-2">
+              <motion.div
+                className="w-1.5 h-1.5 bg-secondary-400 rounded-full"
+                animate={{ y: [0, 12, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+            </div>
+          </motion.div>
+        )}
       </section>
 
       {/* Stats Section - Apple Numbers Style */}
