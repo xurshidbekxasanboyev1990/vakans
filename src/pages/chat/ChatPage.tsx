@@ -546,7 +546,7 @@ export function ChatPage() {
                                     <div className="flex items-center gap-2 md:gap-3">
                                         <button
                                             type="button"
-                                            className="hidden sm:block p-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
+                                            className="hidden sm:block p-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors flex-shrink-0"
                                         >
                                             <Smile className="w-5 h-5 text-secondary-500" />
                                         </button>
@@ -566,23 +566,21 @@ export function ChatPage() {
                                                 }
                                             }}
                                             placeholder="Xabar yozing..."
-                                            className="flex-1 px-4 py-2.5 rounded-xl border border-secondary-200 dark:border-secondary-700 bg-secondary-50 dark:bg-secondary-800 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm md:text-base"
+                                            className="flex-1 min-w-0 px-4 py-2.5 rounded-xl border border-secondary-200 dark:border-secondary-700 bg-secondary-50 dark:bg-secondary-800 focus:outline-none focus:border-primary-500 text-sm md:text-base transition-colors"
                                             disabled={isSending}
                                             autoComplete="off"
                                         />
-                                        <motion.button
+                                        <button
                                             type="submit"
                                             disabled={!newMessage.trim() || isSending}
-                                            className="p-2.5 md:p-3 rounded-xl bg-primary-500 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-600 transition-colors"
-                                            whileHover={{ scale: 1.05 }}
-                                            whileTap={{ scale: 0.95 }}
+                                            className="p-2.5 md:p-3 rounded-xl bg-primary-500 text-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-600 transition-colors flex-shrink-0"
                                         >
                                             {isSending ? (
                                                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                             ) : (
                                                 <Send className="w-5 h-5" />
                                             )}
-                                        </motion.button>
+                                        </button>
                                     </div>
                                 </form>
                             </>
