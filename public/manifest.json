@@ -23,7 +23,11 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": ["business", "employment", "lifestyle"],
+  "categories": [
+    "business",
+    "employment",
+    "lifestyle"
+  ],
   "lang": "uz",
   "dir": "ltr",
   "shortcuts": [

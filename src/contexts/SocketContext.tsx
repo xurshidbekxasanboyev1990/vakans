@@ -13,23 +13,23 @@ import { toast } from 'sonner';
 const getSocketUrl = () => {
     if (typeof window !== 'undefined') {
         const hostname = window.location.hostname;
-        
+
         // Production domain
         if (hostname === 'vakans.uz' || hostname === 'www.vakans.uz') {
             return 'https://vakans.uz';
         }
-        
+
         // Server IP
         if (hostname === '77.237.239.235') {
             return 'http://77.237.239.235:5000';
         }
-        
+
         // Other network IPs (dev)
         if (hostname !== 'localhost') {
             return `http://${hostname}:5000`;
         }
     }
-    
+
     // Local development
     return import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 };
