@@ -49,7 +49,7 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nestjs
 
 # Create uploads directory with proper permissions
-RUN mkdir -p /app/uploads/avatars /app/uploads/documents /app/uploads/images && \
+RUN mkdir -p /app/uploads/avatars /app/uploads/resumes /app/uploads/chat /app/uploads/general && \
     chown -R nestjs:nodejs /app/uploads
 
 # Copy built application
@@ -70,7 +70,7 @@ USER nestjs
 
 # Health check - longer start period for migrations
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:5000/api/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:5000/api/v1/health || exit 1
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
