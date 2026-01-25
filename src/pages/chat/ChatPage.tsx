@@ -396,7 +396,7 @@ export function ChatPage() {
                     <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className={`flex-1 bg-white dark:bg-secondary-900 rounded-2xl shadow-sm border border-secondary-200 dark:border-secondary-800 overflow-hidden flex flex-col ${showMobileChat ? 'fixed inset-0 z-50 md:relative md:inset-auto rounded-none md:rounded-2xl' : 'hidden md:flex'}`}
+                        className={`flex-1 bg-white dark:bg-secondary-900 rounded-2xl shadow-sm border border-secondary-200 dark:border-secondary-800 overflow-hidden flex flex-col ${showMobileChat ? 'fixed inset-x-0 top-0 bottom-16 z-40 md:relative md:inset-auto md:bottom-auto rounded-none md:rounded-2xl' : 'hidden md:flex'}`}
                     >
                         {selectedRoom ? (
                             <>
@@ -531,7 +531,7 @@ export function ChatPage() {
                                 </div>
 
                                 {/* Message Input */}
-                                <form onSubmit={handleSendMessage} className="sticky bottom-0 p-4 border-t border-secondary-200 dark:border-secondary-800 bg-white dark:bg-secondary-900">
+                                <form onSubmit={handleSendMessage} className="sticky bottom-0 p-3 md:p-4 border-t border-secondary-200 dark:border-secondary-800 bg-white dark:bg-secondary-900 safe-area-bottom">
                                     {/* Typing indicator */}
                                     {roomTypingUsers.length > 0 && (
                                         <div className="mb-2 text-xs text-primary-500 animate-pulse flex items-center gap-2">

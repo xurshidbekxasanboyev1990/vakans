@@ -25,7 +25,7 @@
     --ring: 238.7 83.5% 66.7%;
     --radius: 0.75rem;
   }
-  
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
@@ -53,7 +53,7 @@
   * {
     @apply border-border;
   }
-  
+
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -64,25 +64,34 @@
   .glass {
     @apply bg-white/70 dark:bg-secondary-900/70 backdrop-blur-xl backdrop-saturate-150;
   }
-  
+
   .glass-strong {
     @apply bg-white/90 dark:bg-secondary-900/90 backdrop-blur-2xl backdrop-saturate-200;
   }
-  
+
   .gradient-primary {
     @apply bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700;
   }
-  
+
   .gradient-text {
     @apply bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent;
   }
-  
+
   .card-hover {
     @apply transition-all duration-300 hover:shadow-soft hover:-translate-y-1;
   }
-  
+
   .btn-glow {
     @apply shadow-glow hover:shadow-xl transition-shadow duration-300;
+  }
+
+  /* Safe area for mobile devices */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
 
@@ -130,9 +139,12 @@
 
 /* Gradient Animation for Apple-style effect */
 @keyframes gradient {
-  0%, 100% {
+
+  0%,
+  100% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
@@ -173,6 +185,7 @@ html {
   0% {
     background-position: -1000px 0;
   }
+
   100% {
     background-position: 1000px 0;
   }
@@ -180,22 +193,18 @@ html {
 
 .shimmer {
   animation: shimmer 2s infinite linear;
-  background: linear-gradient(
-    to right,
-    rgba(0, 0, 0, 0.05) 0%,
-    rgba(0, 0, 0, 0.1) 50%,
-    rgba(0, 0, 0, 0.05) 100%
-  );
+  background: linear-gradient(to right,
+      rgba(0, 0, 0, 0.05) 0%,
+      rgba(0, 0, 0, 0.1) 50%,
+      rgba(0, 0, 0, 0.05) 100%);
   background-size: 1000px 100%;
 }
 
 .dark .shimmer {
-  background: linear-gradient(
-    to right,
-    rgba(255, 255, 255, 0.02) 0%,
-    rgba(255, 255, 255, 0.08) 50%,
-    rgba(255, 255, 255, 0.02) 100%
-  );
+  background: linear-gradient(to right,
+      rgba(255, 255, 255, 0.02) 0%,
+      rgba(255, 255, 255, 0.08) 50%,
+      rgba(255, 255, 255, 0.02) 100%);
   background-size: 1000px 100%;
 }
 
@@ -205,6 +214,7 @@ html {
     transform: scale(0);
     opacity: 1;
   }
+
   100% {
     transform: scale(4);
     opacity: 0;
@@ -234,7 +244,7 @@ html {
   html {
     scroll-behavior: auto;
   }
-  
+
   .animate-gradient {
     animation: none;
   }
