@@ -26,24 +26,20 @@ const getApiUrl = () => {
   // Production - vakans.uz
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
+    const protocol = window.location.protocol;
 
-    // Production domain
-    if (hostname === 'vakans.uz' || hostname === 'www.vakans.uz') {
-      return 'https://vakans.uz/api';
-    }
-
-    // Server IP
-    if (hostname === '77.237.239.235') {
-      return `http://77.237.239.235:5000/api`;
+    // Production domain or Server IP - use relative /api (nginx proxy handles it)
+    if (hostname === 'vakans.uz' || hostname === 'www.vakans.uz' || hostname === '77.237.239.235') {
+      return '/api';
     }
 
     // Other network IPs (dev)
-    if (hostname !== 'localhost') {
-      return `http://${hostname}:5000/api`;
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      return `${protocol}//${hostname}:5000/api`;
     }
   }
 
-  // Local development - use proxy
+  // Local development - use proxy or env variable
   return import.meta.env.VITE_API_URL || '/api';
 };
 

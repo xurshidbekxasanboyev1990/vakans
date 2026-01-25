@@ -1,0 +1,124 @@
+# ===========================================
+# Docker Compose for LOCAL Development
+# Vakans.uz - Local Environment
+# ===========================================
+
+version: '3.8'
+
+services:
+  # ===========================================
+  # PostgreSQL Database (Local)
+  # ===========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: vakans-local-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: vakans
+      POSTGRES_PASSWORD: vakans123
+      POSTGRES_DB: vakans_local
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U vakans -d vakans_local" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vakans-local-network
+
+  # ===========================================
+  # Redis Cache (Local)
+  # ===========================================
+  redis:
+    image: redis:7-alpine
+    container_name: vakans-local-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_local_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vakans-local-network
+
+  # ===========================================
+  # Backend API (NestJS) - Local Dev Mode
+  # ===========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.local
+    container_name: vakans-local-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 5000
+      DATABASE_URL: postgresql://vakans:vakans123@postgres:5432/vakans_local?schema=public
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      JWT_SECRET: local_jwt_secret_key_12345
+      JWT_REFRESH_SECRET: local_refresh_secret_key_12345
+      CORS_ORIGIN: http://localhost:3000,http://localhost:5173,http://127.0.0.1:3000,http://127.0.0.1:5173
+      FRONTEND_URL: http://localhost:5173
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./backend/uploads:/app/uploads
+    networks:
+      - vakans-local-network
+
+  # ===========================================
+  # pgAdmin (Local Database Management)
+  # ===========================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: vakans-local-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@local.dev
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_local_data:/var/lib/pgadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - vakans-local-network
+
+# ===========================================
+# Networks
+# ===========================================
+networks:
+  vakans-local-network:
+    driver: bridge
+
+# ===========================================
+# Volumes
+# ===========================================
+volumes:
+  postgres_local_data:
+    driver: local
+  redis_local_data:
+    driver: local
+  pgadmin_local_data:
+    driver: local
