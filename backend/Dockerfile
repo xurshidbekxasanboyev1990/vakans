@@ -42,7 +42,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 # Install production dependencies
-RUN apk add --no-cache libc6-compat openssl dumb-init
+RUN apk add --no-cache libc6-compat openssl dumb-init curl
 
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs
@@ -68,9 +68,9 @@ EXPOSE 5000
 # Switch to non-root user
 USER nestjs
 
-# Health check - longer start period for migrations
+# Health check - using curl instead of wget
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=5 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:5000/api/v1/health || exit 1
+    CMD curl -f http://localhost:5000/api/v1/health || exit 1
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]
