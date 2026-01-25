@@ -1,210 +1,53 @@
-﻿import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
-import type {
-  User, Job, Application, Category, ChatRoom, ChatMessage, Notification,
-  DashboardStats, ApiResponse, JobsResponse, ApplicationsResponse, UsersResponse, NotificationsResponse
+﻿import type {
+  ApiResponse,
+  Application,
+  ApplicationsResponse,
+  Category,
+  ChatMessage,
+  ChatRoom,
+  DashboardStats,
+  Job,
+  JobsResponse,
+  Notification,
+  NotificationsResponse,
+  Pagination,
+  Report,
+  User,
+  UsersResponse
 } from '@/types';
-
-// ============================================
-// DEMO MODE - No backend required
-// ============================================
-
-const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
-
-// Demo users - WARNING: For development only!
-// In production, remove this and use real authentication
-// Parollar: Worker123, Employer123, Admin123
-const DEMO_USERS: Record<string, User & { password: string }> = {
-  '+998901234567': {
-    id: '1',
-    phone: '+998901234567',
-    password: 'Worker123',
-    firstName: 'Aziz',
-    lastName: 'Karimov',
-    role: 'worker',
-    avatar: '',
-    region: 'Toshkent',
-    isVerified: true,
-    createdAt: new Date().toISOString(),
-  },
-  '+998901111111': {
-    id: '2', 
-    phone: '+998901111111',
-    password: 'Employer123',
-    firstName: 'Jasur',
-    lastName: 'Rahimov',
-    role: 'employer',
-    avatar: '',
-    region: 'Toshkent',
-    companyName: 'Tech Solutions',
-    isVerified: true,
-    createdAt: new Date().toISOString(),
-  },
-  '+998900000000': {
-    id: '3',
-    phone: '+998900000000',
-    password: 'Admin123',
-    firstName: 'Admin',
-    lastName: 'Superuser',
-    role: 'admin',
-    avatar: '',
-    region: 'Toshkent',
-    isVerified: true,
-    createdAt: new Date().toISOString(),
-  },
-};
-
-// Demo jobs
-const DEMO_JOBS: Job[] = [
-  {
-    id: '1',
-    title: 'Frontend Developer',
-    description: 'React, TypeScript, Tailwind CSS bilimingiz bo\'lishi kerak. Remote ishlash imkoniyati mavjud.',
-    employerId: '2',
-    employerName: 'Tech Solutions',
-    categoryId: '1',
-    location: 'Toshkent',
-    workType: 'full-time',
-    salaryMin: 8000000,
-    salaryMax: 12000000,
-    requirements: ['React', 'TypeScript', 'Tailwind CSS', '2 yil tajriba'],
-    benefits: ['Remote', 'Flexible hours', 'Health insurance'],
-    status: 'active',
-    viewsCount: 150,
-    applicationsCount: 12,
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '2',
-    title: 'Sotuvchi',
-    description: 'Katta savdo markazida sotuvchi kerak. Tajriba talab qilinmaydi.',
-    employerId: '2',
-    employerName: 'Market Plus',
-    categoryId: '2',
-    location: 'Samarqand',
-    workType: 'part-time',
-    salaryMin: 3000000,
-    salaryMax: 5000000,
-    requirements: ['Kommunikabellik', 'Vijdonlilik'],
-    benefits: ['Tushlik', 'Bonus'],
-    status: 'active',
-    viewsCount: 89,
-    applicationsCount: 5,
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '3',
-    title: 'Haydovchi',
-    description: 'B kategoriya haydovchilik guvohnomasi talab qilinadi.',
-    employerId: '2',
-    employerName: 'Logistic Pro',
-    categoryId: '3',
-    location: 'Buxoro',
-    workType: 'full-time',
-    salaryMin: 4000000,
-    salaryMax: 6000000,
-    requirements: ['B kategoriya', '3 yil tajriba'],
-    benefits: ['Benzin', 'Telefon'],
-    status: 'active',
-    viewsCount: 67,
-    applicationsCount: 8,
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '4',
-    title: 'Backend Developer',
-    description: 'Node.js, PostgreSQL, Redis bilan ishlash tajribasi kerak.',
-    employerId: '2',
-    employerName: 'Tech Solutions',
-    categoryId: '1',
-    location: 'Toshkent',
-    workType: 'remote',
-    salaryMin: 10000000,
-    salaryMax: 15000000,
-    requirements: ['Node.js', 'PostgreSQL', 'Redis', '3 yil tajriba'],
-    benefits: ['100% Remote', 'Equipment provided'],
-    status: 'active',
-    viewsCount: 200,
-    applicationsCount: 18,
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '5',
-    title: 'Oshpaz',
-    description: 'Milliy va Yevropa oshxonasi bo\'yicha tajriba kerak.',
-    employerId: '2',
-    employerName: 'Grand Restaurant',
-    categoryId: '4',
-    location: 'Toshkent',
-    workType: 'full-time',
-    salaryMin: 5000000,
-    salaryMax: 8000000,
-    requirements: ['3 yil tajriba', 'Sanitariya kitobchasi'],
-    benefits: ['Tushlik', 'Ish kiyimi'],
-    status: 'active',
-    viewsCount: 45,
-    applicationsCount: 3,
-    createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: '6',
-    title: 'Dizayner (UI/UX)',
-    description: 'Figma, Adobe XD da professional darajada ishlash.',
-    employerId: '2',
-    employerName: 'Creative Agency',
-    categoryId: '1',
-    location: 'Toshkent',
-    workType: 'full-time',
-    salaryMin: 7000000,
-    salaryMax: 10000000,
-    requirements: ['Figma', 'Adobe XD', 'Portfolio'],
-    benefits: ['Remote', 'Flexible'],
-    status: 'active',
-    viewsCount: 120,
-    applicationsCount: 9,
-    createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
-
-// Demo categories
-const DEMO_CATEGORIES: Category[] = [
-  { id: '1', name: 'IT va Dasturlash', slug: 'it', icon: '💻', jobsCount: 150 },
-  { id: '2', name: 'Savdo', slug: 'sales', icon: '🛒', jobsCount: 89 },
-  { id: '3', name: 'Transport', slug: 'transport', icon: '🚗', jobsCount: 67 },
-  { id: '4', name: 'Oshxona', slug: 'kitchen', icon: '🍳', jobsCount: 45 },
-  { id: '5', name: 'Ta\'lim', slug: 'education', icon: '📚', jobsCount: 78 },
-  { id: '6', name: 'Tibbiyot', slug: 'medicine', icon: '🏥', jobsCount: 56 },
-  { id: '7', name: 'Qurilish', slug: 'construction', icon: '🏗️', jobsCount: 90 },
-  { id: '8', name: 'Boshqa', slug: 'other', icon: '📋', jobsCount: 120 },
-];
-
-// Demo storage helpers
-const getStoredUser = (): User | null => {
-  const stored = localStorage.getItem('demo_user');
-  return stored ? JSON.parse(stored) : null;
-};
-
-const setStoredUser = (user: User | null) => {
-  if (user) {
-    localStorage.setItem('demo_user', JSON.stringify(user));
-  } else {
-    localStorage.removeItem('demo_user');
-  }
-};
-
-const getStoredUsers = (): Record<string, User & { password: string }> => {
-  const stored = localStorage.getItem('demo_users');
-  return stored ? JSON.parse(stored) : { ...DEMO_USERS };
-};
-
-const saveStoredUsers = (users: Record<string, User & { password: string }>) => {
-  localStorage.setItem('demo_users', JSON.stringify(users));
-};
+import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
 // ============================================
 // AXIOS INSTANCE
 // ============================================
 
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+// Production and development API URL
+const getApiUrl = () => {
+  // Production - vakans.uz
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    
+    // Production domain
+    if (hostname === 'vakans.uz' || hostname === 'www.vakans.uz') {
+      return 'https://vakans.uz/api';
+    }
+    
+    // Server IP
+    if (hostname === '77.237.239.235') {
+      return `http://77.237.239.235:5000/api`;
+    }
+    
+    // Other network IPs (dev)
+    if (hostname !== 'localhost') {
+      return `http://${hostname}:5000/api`;
+    }
+  }
+  
+  // Local development - use proxy
+  return import.meta.env.VITE_API_URL || '/api';
+};
+
+const API_URL = getApiUrl();
 const API_VERSION = import.meta.env.VITE_API_VERSION || 'v1';
 
 const axiosInstance: AxiosInstance = axios.create({
@@ -219,6 +62,11 @@ const axiosInstance: AxiosInstance = axios.create({
 // Request interceptor
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
+    // Token localStorage'dan olinadi
+    const token = localStorage.getItem('vakans_token');
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error: AxiosError) => {
@@ -246,7 +94,14 @@ axiosInstance.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+    // 401 xatosi - faqat auth refresh bilan ishlash
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Auth endpointlarida refresh qilmaslik
+      const isAuthEndpoint = originalRequest.url?.includes('/auth/');
+      if (isAuthEndpoint) {
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -257,11 +112,21 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await axiosInstance.post('/auth/refresh');
+        const { data } = await axiosInstance.post('/auth/refresh');
+        if (data.accessToken) {
+          localStorage.setItem('vakans_token', data.accessToken);
+        }
         processQueue(null);
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError as AxiosError);
+        // Refresh xatosi bo'lsa, token va user o'chiriladi - qayta login kerak
+        localStorage.removeItem('vakans_token');
+        localStorage.removeItem('vakans_user');
+        // Sahifani yangilash (login sahifasiga yo'naltirish uchun)
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
@@ -278,13 +143,98 @@ axiosInstance.interceptors.response.use(
 
 function handleError(error: unknown): string {
   if (axios.isAxiosError(error)) {
-    return error.response?.data?.error || error.message || 'Xatolik yuz berdi';
+    const message = error.response?.data?.message;
+    if (Array.isArray(message)) {
+      return message.join(', ');
+    }
+    return message || error.response?.data?.error || error.message || 'Xatolik yuz berdi';
   }
   return 'Xatolik yuz berdi';
 }
 
-// Simulate network delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+// Transform backend user response to frontend format
+// Backend sends role as 'WORKER', 'EMPLOYER', 'ADMIN' (uppercase)
+// Frontend expects 'worker', 'employer', 'admin' (lowercase)
+function transformUser(backendUser: Record<string, unknown>): User {
+  return {
+    ...backendUser,
+    role: (backendUser.role as string)?.toLowerCase() as 'worker' | 'employer' | 'admin',
+  } as User;
+}
+
+// Transform job from backend
+function transformJob(backendJob: Record<string, unknown>): Job {
+  return {
+    ...backendJob,
+    workType: (backendJob.workType as string)?.toLowerCase().replace('_', '-') as Job['workType'],
+    status: (backendJob.status as string)?.toLowerCase() as Job['status'],
+  } as Job;
+}
+
+// Transform application from backend
+// Backend: { job: { title, employer: { companyName, firstName } }, worker: { firstName, lastName } }
+// Frontend: { jobTitle, employerName, applicantName }
+function transformApplication(backendApp: Record<string, unknown>): Application {
+  const job = backendApp.job as Record<string, unknown> | undefined;
+  const worker = backendApp.worker as Record<string, unknown> | undefined;
+  const employer = job?.employer as Record<string, unknown> | undefined;
+
+  return {
+    // Asosiy maydonlar
+    id: backendApp.id,
+    jobId: backendApp.jobId,
+    workerId: backendApp.workerId,
+    coverLetter: backendApp.coverLetter,
+    resumeUrl: backendApp.resumeUrl,
+    employerNotes: backendApp.employerNotes,
+    rejectionReason: backendApp.rejectionReason,
+    viewedAt: backendApp.viewedAt,
+    respondedAt: backendApp.respondedAt,
+    createdAt: backendApp.createdAt,
+    updatedAt: backendApp.updatedAt,
+    status: (backendApp.status as string)?.toLowerCase() as Application['status'],
+
+    // Job ma'lumotlari
+    jobTitle: job?.title as string || 'Noma\'lum ish',
+    jobDescription: job?.description as string,
+    jobLocation: job?.location as string || job?.region as string,
+    jobRegion: job?.region as string,
+    jobSalaryMin: job?.salaryMin as number,
+    jobSalaryMax: job?.salaryMax as number,
+    jobWorkType: (job?.workType as string)?.toLowerCase().replace('_', '-'),
+
+    // Employer ma'lumotlari
+    employerId: employer?.id as string,
+    companyName: employer?.companyName as string,
+    companyLogo: employer?.companyLogo as string || employer?.avatar as string,
+    employerName: employer?.companyName as string ||
+      `${employer?.firstName || ''} ${employer?.lastName || ''}`.trim() || 'Noma\'lum',
+    employerFirstName: employer?.firstName as string,
+    employerLastName: employer?.lastName as string,
+    employerPhone: employer?.phone as string,
+    employerAvatar: employer?.avatar as string,
+    employerRegion: employer?.region as string,
+    employerVerified: employer?.isVerified as boolean,
+
+    // Worker/Applicant ma'lumotlari
+    applicantName: `${worker?.firstName || ''} ${worker?.lastName || ''}`.trim() || 'Noma\'lum',
+    applicantFirstName: worker?.firstName as string,
+    applicantLastName: worker?.lastName as string,
+    applicantPhone: worker?.phone as string,
+    applicantAvatar: worker?.avatar as string,
+    applicantEmail: worker?.email as string,
+    applicantRegion: worker?.region as string,
+    applicantSkills: worker?.skills as string[],
+    applicantExperience: worker?.experienceYears as number,
+    applicantBio: worker?.bio as string,
+
+    // Legacy fields
+    workerName: `${worker?.firstName || ''} ${worker?.lastName || ''}`.trim() || 'Noma\'lum',
+    workerPhone: worker?.phone as string,
+    workerAvatar: worker?.avatar as string,
+    workerEmail: worker?.email as string,
+  } as Application;
+}
 
 // ============================================
 // AUTH API
@@ -292,21 +242,16 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const authApi = {
   login: async (phone: string, password: string): Promise<ApiResponse<User>> => {
-    if (DEMO_MODE) {
-      await delay(500);
-      const users = getStoredUsers();
-      const user = Object.values(users).find(u => u.phone === phone && u.password === password);
-      if (user) {
-        const { password: _, ...userWithoutPassword } = user;
-        setStoredUser(userWithoutPassword);
-        return { success: true, data: userWithoutPassword };
-      }
-      return { success: false, error: 'Telefon raqam yoki parol noto\'g\'ri' };
-    }
-    
     try {
-      const { data } = await axiosInstance.post<ApiResponse<User>>('/auth/login', { phone, password });
-      return data;
+      const { data } = await axiosInstance.post<{ success: boolean; data: Record<string, unknown>; accessToken: string; error?: string }>('/auth/login', { phone, password });
+      if (data.success && data.data) {
+        // Token va user'ni saqlash
+        if (data.accessToken) {
+          localStorage.setItem('vakans_token', data.accessToken);
+        }
+        return { success: true, data: transformUser(data.data) };
+      }
+      return { success: false, error: data.error || 'Login muvaffaqiyatsiz' };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
@@ -320,84 +265,65 @@ export const authApi = {
     role: 'worker' | 'employer';
     region?: string;
   }): Promise<ApiResponse<User>> => {
-    if (DEMO_MODE) {
-      await delay(500);
-      const users = getStoredUsers();
-      
-      // Check if phone already exists
-      if (Object.values(users).some(u => u.phone === userData.phone)) {
-        return { success: false, error: 'Bu telefon raqam allaqachon ro\'yxatdan o\'tgan' };
-      }
-      
-      const newUser: User & { password: string } = {
-        id: Date.now().toString(),
-        phone: userData.phone,
-        password: userData.password,
-        firstName: userData.firstName,
-        lastName: userData.lastName || '',
-        role: userData.role,
-        avatar: '',
-        region: userData.region || '',
-        isVerified: false,
-        createdAt: new Date().toISOString(),
-      };
-      
-      users[newUser.id] = newUser;
-      saveStoredUsers(users);
-      
-      const { password: _, ...userWithoutPassword } = newUser;
-      setStoredUser(userWithoutPassword);
-      return { success: true, data: userWithoutPassword };
-    }
-    
     try {
-      const { data } = await axiosInstance.post<ApiResponse<User>>('/auth/register', userData);
-      return data;
+      // Backend WORKER/EMPLOYER kutadi (uppercase)
+      const backendData = {
+        ...userData,
+        role: userData.role.toUpperCase(),
+      };
+      const { data } = await axiosInstance.post<{ success: boolean; data: Record<string, unknown>; accessToken: string; error?: string }>('/auth/register', backendData);
+      if (data.success && data.data) {
+        if (data.accessToken) {
+          localStorage.setItem('vakans_token', data.accessToken);
+        }
+        return { success: true, data: transformUser(data.data) };
+      }
+      return { success: false, error: data.error || 'Ro\'yxatdan o\'tish muvaffaqiyatsiz' };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
   logout: async (): Promise<ApiResponse<null>> => {
-    if (DEMO_MODE) {
-      await delay(200);
-      setStoredUser(null);
-      return { success: true };
-    }
-    
     try {
       await axiosInstance.post('/auth/logout');
+      localStorage.removeItem('vakans_token');
+      localStorage.removeItem('vakans_user');
       return { success: true };
     } catch (error) {
+      localStorage.removeItem('vakans_token');
+      localStorage.removeItem('vakans_user');
       return { success: false, error: handleError(error) };
     }
   },
 
   getMe: async (): Promise<ApiResponse<User>> => {
-    if (DEMO_MODE) {
-      await delay(200);
-      const user = getStoredUser();
-      if (user) {
-        return { success: true, data: user };
-      }
-      return { success: false, error: 'Not authenticated' };
-    }
-    
     try {
-      const { data } = await axiosInstance.get<ApiResponse<User>>('/auth/me');
-      return data;
+      const { data } = await axiosInstance.get<{ success: boolean; data: Record<string, unknown>; error?: string }>('/auth/me');
+      if (data.success && data.data) {
+        return { success: true, data: transformUser(data.data) };
+      }
+      return { success: false, error: data.error || 'Authentication failed' };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
   refresh: async (): Promise<ApiResponse<null>> => {
-    if (DEMO_MODE) {
-      return { success: true };
-    }
-    
     try {
-      await axiosInstance.post('/auth/refresh');
+      const { data } = await axiosInstance.post('/auth/refresh');
+      if (data.accessToken) {
+        localStorage.setItem('vakans_token', data.accessToken);
+      }
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string): Promise<ApiResponse<null>> => {
+    try {
+      await axiosInstance.post('/auth/change-password', { currentPassword, newPassword });
       return { success: true };
     } catch (error) {
       return { success: false, error: handleError(error) };
@@ -413,115 +339,74 @@ export const jobsApi = {
   getAll: async (params?: {
     search?: string;
     categoryId?: string;
+    location?: string;
     workType?: string;
-    region?: string;
-    minSalary?: number;
-    maxSalary?: number;
-    sortBy?: string;
-    sortOrder?: 'asc' | 'desc';
+    salaryMin?: number;
+    salaryMax?: number;
     page?: number;
     limit?: number;
   }): Promise<JobsResponse> => {
-    if (DEMO_MODE) {
-      await delay(300);
-      let jobs = [...DEMO_JOBS];
-      
-      // Filter by search
-      if (params?.search) {
-        const search = params.search.toLowerCase();
-        jobs = jobs.filter(j => 
-          j.title.toLowerCase().includes(search) || 
-          j.description.toLowerCase().includes(search)
-        );
-      }
-      
-      // Filter by category
-      if (params?.categoryId) {
-        jobs = jobs.filter(j => j.categoryId === params.categoryId);
-      }
-      
-      // Filter by workType
-      if (params?.workType) {
-        jobs = jobs.filter(j => j.workType === params.workType);
-      }
-      
-      // Filter by region
-      if (params?.region) {
-        jobs = jobs.filter(j => j.location.toLowerCase().includes(params.region!.toLowerCase()));
-      }
-      
-      const page = params?.page || 1;
-      const limit = params?.limit || 12;
-      const total = jobs.length;
-      const start = (page - 1) * limit;
-      const paginatedJobs = jobs.slice(start, start + limit);
-      
-      return {
-        success: true,
-        data: paginatedJobs,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      };
-    }
-    
     try {
       const { data } = await axiosInstance.get<JobsResponse>('/jobs', { params });
+      // Transform jobs
+      if (data.data) {
+        data.data = data.data.map(job => transformJob(job as unknown as Record<string, unknown>));
+      }
       return data;
     } catch (error) {
       return { success: false, data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
     }
   },
 
-  getOne: async (id: string): Promise<ApiResponse<Job>> => {
-    if (DEMO_MODE) {
-      await delay(200);
-      const job = DEMO_JOBS.find(j => j.id === id);
-      if (job) {
-        return { success: true, data: job };
+  getById: async (id: string): Promise<ApiResponse<Job>> => {
+    try {
+      const { data } = await axiosInstance.get<ApiResponse<Record<string, unknown>>>(`/jobs/${id}`);
+      if (data.success && data.data) {
+        return { success: true, data: transformJob(data.data) };
       }
       return { success: false, error: 'Ish topilmadi' };
-    }
-    
-    try {
-      const { data } = await axiosInstance.get<ApiResponse<Job>>(`/jobs/${id}`);
-      return data;
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
-  create: async (jobData: Partial<Job>): Promise<ApiResponse<Job>> => {
-    if (DEMO_MODE) {
-      await delay(300);
-      const newJob: Job = {
-        id: Date.now().toString(),
-        title: jobData.title || '',
-        description: jobData.description || '',
-        employerId: getStoredUser()?.id || '',
-        employerName: getStoredUser()?.companyName || getStoredUser()?.firstName || '',
-        categoryId: jobData.categoryId || '1',
-        location: jobData.location || '',
-        workType: jobData.workType || 'full-time',
-        salaryMin: jobData.salaryMin || 0,
-        salaryMax: jobData.salaryMax || 0,
-        requirements: jobData.requirements || [],
-        benefits: jobData.benefits || [],
-        status: 'active',
-        viewsCount: 0,
-        applicationsCount: 0,
-        createdAt: new Date().toISOString(),
-      };
-      DEMO_JOBS.unshift(newJob);
-      return { success: true, data: newJob };
-    }
-    
+  create: async (jobData: {
+    title: string;
+    description: string;
+    requirements?: string;
+    salary?: number;
+    salaryMax?: number;
+    region?: string;
+    workType?: string;
+    experienceRequired?: string;
+    category?: string;
+    location?: string;
+    address?: string;
+    benefits?: string[];
+  }): Promise<ApiResponse<Job>> => {
     try {
-      const { data } = await axiosInstance.post<ApiResponse<Job>>('/jobs', jobData);
-      return data;
+      // Backend formatiga o'zgartirish
+      const backendData = {
+        title: jobData.title,
+        description: jobData.description,
+        requirements: jobData.requirements ? jobData.requirements.split('\n').filter(r => r.trim()) : undefined,
+        salaryMin: jobData.salary,
+        salaryMax: jobData.salaryMax,
+        region: jobData.region,
+        location: jobData.location || jobData.region,
+        workType: jobData.workType?.toUpperCase().replace('-', '_') || 'FULL_TIME',
+        experienceRequired: jobData.experienceRequired,
+        categoryId: jobData.category || undefined,
+        address: jobData.address,
+        benefits: jobData.benefits,
+        salaryType: 'MONTHLY',
+        currency: 'UZS',
+      };
+      const { data } = await axiosInstance.post<{ success: boolean; data: Record<string, unknown>; message?: string }>('/jobs', backendData);
+      if (data.success && data.data) {
+        return { success: true, data: transformJob(data.data) };
+      }
+      return { success: false, error: 'Ish yaratilmadi' };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
@@ -529,8 +414,15 @@ export const jobsApi = {
 
   update: async (id: string, jobData: Partial<Job>): Promise<ApiResponse<Job>> => {
     try {
-      const { data } = await axiosInstance.put<ApiResponse<Job>>(`/jobs/${id}`, jobData);
-      return data;
+      const backendData = {
+        ...jobData,
+        workType: jobData.workType?.toUpperCase().replace('-', '_'),
+      };
+      const { data } = await axiosInstance.put<ApiResponse<Record<string, unknown>>>(`/jobs/${id}`, backendData);
+      if (data.success && data.data) {
+        return { success: true, data: transformJob(data.data) };
+      }
+      return { success: false, error: 'Ish yangilanmadi' };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
@@ -545,58 +437,111 @@ export const jobsApi = {
     }
   },
 
-  getMyJobs: async (params?: { status?: string; page?: number; limit?: number }): Promise<JobsResponse> => {
+  getMyJobs: async (params?: { page?: number; limit?: number }): Promise<JobsResponse> => {
     try {
       const { data } = await axiosInstance.get<JobsResponse>('/jobs/my', { params });
+      if (data.data) {
+        data.data = data.data.map(job => transformJob(job as unknown as Record<string, unknown>));
+      }
       return data;
     } catch (error) {
       return { success: false, data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
     }
   },
 
-  save: async (id: string): Promise<ApiResponse<{ saved: boolean }>> => {
-    if (DEMO_MODE) {
-      await delay(200);
-      // Demo - localStorage da saqlash
-      const savedJobs = JSON.parse(localStorage.getItem('demo_saved_jobs') || '[]');
-      const index = savedJobs.indexOf(id);
-      if (index > -1) {
-        savedJobs.splice(index, 1);
-      } else {
-        savedJobs.push(id);
+  getSavedJobs: async (params?: { page?: number; limit?: number }): Promise<JobsResponse> => {
+    try {
+      const { data } = await axiosInstance.get<JobsResponse>('/jobs/saved', { params });
+      if (data.data) {
+        data.data = data.data.map(job => transformJob(job as unknown as Record<string, unknown>));
       }
-      localStorage.setItem('demo_saved_jobs', JSON.stringify(savedJobs));
-      return { success: true, data: { saved: index === -1 } };
+      return data;
+    } catch (error) {
+      return { success: false, data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
     }
-    
+  },
+
+  saveJob: async (id: string): Promise<ApiResponse<{ saved: boolean }>> => {
     try {
-      const { data } = await axiosInstance.post<ApiResponse<{ saved: boolean }>>(`/jobs/${id}/save`);
+      const { data } = await axiosInstance.post<{ success: boolean; data: { saved: boolean } }>(`/jobs/${id}/save`);
+      if (data.success) {
+        return { success: true, data: data.data };
+      }
+      return { success: true, data: { saved: true } };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  unsaveJob: async (id: string): Promise<ApiResponse<{ saved: boolean }>> => {
+    // Backend POST orqali toggle qiladi - bir xil endpoint
+    try {
+      const { data } = await axiosInstance.post<{ success: boolean; data: { saved: boolean } }>(`/jobs/${id}/save`);
+      if (data.success) {
+        return { success: true, data: data.data };
+      }
+      return { success: true, data: { saved: false } };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  // Public stats for Landing Page
+  getPublicStats: async (): Promise<ApiResponse<{
+    totalJobs: number;
+    totalUsers: number;
+    totalCompanies: number;
+    satisfactionRate: number;
+  }>> => {
+    try {
+      const { data } = await axiosInstance.get('/jobs/public/stats');
       return data;
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
-  getSaved: async (): Promise<ApiResponse<Job[]>> => {
-    if (DEMO_MODE) {
-      await delay(200);
-      const savedJobIds = JSON.parse(localStorage.getItem('demo_saved_jobs') || '[]');
-      const savedJobs = DEMO_JOBS.filter(job => savedJobIds.includes(job.id));
-      return { success: true, data: savedJobs };
-    }
-    
+  // Featured jobs for Landing Page
+  getFeaturedJobs: async (limit = 6): Promise<ApiResponse<Array<{
+    id: string;
+    title: string;
+    company: string;
+    salary: string;
+    location: string;
+    type: string;
+  }>>> => {
     try {
-      const { data } = await axiosInstance.get<ApiResponse<Job[]>>('/jobs/saved');
+      const { data } = await axiosInstance.get(`/jobs/public/featured?limit=${limit}`);
       return data;
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
-
-  react: async (id: string, reaction: 'like' | 'dislike'): Promise<ApiResponse<{ reaction: string | null }>> => {
+  likeJob: async (id: string): Promise<ApiResponse<null>> => {
     try {
-      const { data } = await axiosInstance.post<ApiResponse<{ reaction: string | null }>>(`/jobs/${id}/react`, { reaction });
-      return data;
+      await axiosInstance.post(`/jobs/${id}/like`);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  dislikeJob: async (id: string): Promise<ApiResponse<null>> => {
+    try {
+      await axiosInstance.post(`/jobs/${id}/dislike`);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  updateStatus: async (id: string, status: 'ACTIVE' | 'CLOSED' | 'PENDING'): Promise<ApiResponse<Job>> => {
+    try {
+      const { data } = await axiosInstance.put<ApiResponse<Record<string, unknown>>>(`/jobs/${id}/status`, { status });
+      if (data.success && data.data) {
+        return { success: true, data: transformJob(data.data) };
+      }
+      return { success: false, error: 'Status yangilanmadi' };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
@@ -608,89 +553,69 @@ export const jobsApi = {
 // ============================================
 
 export const applicationsApi = {
-  apply: async (jobId: string, coverLetter?: string): Promise<ApiResponse<Application>> => {
-    if (DEMO_MODE) {
-      await delay(300);
-      const user = getStoredUser();
-      if (!user) {
-        return { success: false, error: 'Tizimga kiring' };
-      }
-      const job = DEMO_JOBS.find(j => j.id === jobId);
-      const newApplication: Application = {
-        id: 'app-' + Date.now(),
-        jobId,
-        workerId: user.id,
-        coverLetter,
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-        jobTitle: job?.title,
-        companyName: job?.employerName,
-        employerName: job?.employerName,
-      };
-      // Store in localStorage
-      const applications = JSON.parse(localStorage.getItem('demo_applications') || '[]');
-      applications.unshift(newApplication);
-      localStorage.setItem('demo_applications', JSON.stringify(applications));
-      return { success: true, data: newApplication };
-    }
-    
+  apply: async (jobId: string, coverLetter?: string): Promise<ApiResponse<Application> & { alreadyApplied?: boolean }> => {
     try {
-      const { data } = await axiosInstance.post<ApiResponse<Application>>('/applications', { jobId, coverLetter });
+      const { data } = await axiosInstance.post<Application | ApiResponse<Application>>('/applications', { jobId, coverLetter });
+      // Backend to'g'ridan-to'g'ri application object qaytaradi yoki { success, data } formatda
+      if ('success' in data) {
+        return data as ApiResponse<Application>;
+      }
+      // To'g'ridan-to'g'ri application object qaytarilsa
+      return { success: true, data: data as Application };
+    } catch (error) {
+      // 409 Conflict - allaqachon ariza yuborilgan
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
+        return { success: false, error: 'Siz bu ishga allaqachon ariza topshirgansiz', alreadyApplied: true };
+      }
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  getMyApplications: async (params?: { page?: number; limit?: number }): Promise<ApplicationsResponse> => {
+    try {
+      const { data } = await axiosInstance.get<{ applications: Record<string, unknown>[]; pagination: { page: number; limit: number; total: number; totalPages: number } } | ApplicationsResponse>('/applications/my', { params });
+      // Backend { applications, pagination } formatda qaytaradi
+      if ('applications' in data) {
+        const transformedApps = data.applications.map(app => transformApplication(app));
+        return { success: true, data: transformedApps, pagination: data.pagination };
+      }
+      return data as ApplicationsResponse;
+    } catch (error) {
+      return { success: false, data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
+    }
+  },
+
+  getReceivedApplications: async (params?: { jobId?: string; status?: string; page?: number; limit?: number }): Promise<ApplicationsResponse> => {
+    try {
+      const { data } = await axiosInstance.get<{ applications: Record<string, unknown>[]; pagination: { page: number; limit: number; total: number; totalPages: number } } | ApplicationsResponse>('/applications/received', { params });
+      // Backend { applications, pagination } formatda qaytaradi
+      if ('applications' in data) {
+        const transformedApps = data.applications.map(app => transformApplication(app));
+        return { success: true, data: transformedApps, pagination: data.pagination };
+      }
+      return data as ApplicationsResponse;
+    } catch (error) {
+      return { success: false, data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
+    }
+  },
+
+  getById: async (id: string): Promise<ApiResponse<Application>> => {
+    try {
+      const { data } = await axiosInstance.get<ApiResponse<Application>>(`/applications/${id}`);
       return data;
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
-  getMyApplications: async (params?: { status?: string; page?: number; limit?: number }): Promise<ApplicationsResponse> => {
-    if (DEMO_MODE) {
-      await delay(200);
-      const user = getStoredUser();
-      if (!user) {
-        return { success: true, data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
-      }
-      let applications: Application[] = JSON.parse(localStorage.getItem('demo_applications') || '[]');
-      
-      // Filter by status if provided
-      if (params?.status) {
-        applications = applications.filter(app => app.status === params.status);
-      }
-      
-      const page = params?.page || 1;
-      const limit = params?.limit || 10;
-      const total = applications.length;
-      const start = (page - 1) * limit;
-      const paginatedApps = applications.slice(start, start + limit);
-      
-      return {
-        success: true,
-        data: paginatedApps,
-        pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
-      };
-    }
-    
+  updateStatus: async (id: string, status: string): Promise<ApiResponse<Application>> => {
     try {
-      const { data } = await axiosInstance.get<ApplicationsResponse>('/applications/my', { params });
+      console.log('Updating application status:', id, status.toUpperCase());
+      const { data } = await axiosInstance.put<ApiResponse<Application>>(`/applications/${id}/status`, { status: status.toUpperCase() });
+      console.log('Update response:', data);
       return data;
-    } catch (error) {
-      return { success: false, data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
-    }
-  },
-
-  getJobApplications: async (jobId: string, params?: { status?: string; page?: number; limit?: number }): Promise<ApplicationsResponse> => {
-    try {
-      const { data } = await axiosInstance.get<ApplicationsResponse>(`/applications/job/${jobId}`, { params });
-      return data;
-    } catch (error) {
-      return { success: false, data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
-    }
-  },
-
-  updateStatus: async (id: string, status: string, notes?: string): Promise<ApiResponse<Application>> => {
-    try {
-      const { data } = await axiosInstance.put<ApiResponse<Application>>(`/applications/${id}/status`, { status, employerNotes: notes });
-      return data;
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Update status error:', error.response?.data);
       return { success: false, error: handleError(error) };
     }
   },
@@ -699,6 +624,15 @@ export const applicationsApi = {
     try {
       await axiosInstance.delete(`/applications/${id}`);
       return { success: true };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  checkIfApplied: async (jobId: string): Promise<ApiResponse<{ applied: boolean; applicationId?: string }>> => {
+    try {
+      const { data } = await axiosInstance.get<{ hasApplied: boolean; applicationId?: string }>(`/applications/check/${jobId}`);
+      return { success: true, data: { applied: data.hasApplied, applicationId: data.applicationId } };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
@@ -712,62 +646,73 @@ export const applicationsApi = {
 export const usersApi = {
   getProfile: async (): Promise<ApiResponse<User>> => {
     try {
-      const { data } = await axiosInstance.get<ApiResponse<User>>('/users/me');
-      return data;
+      const { data } = await axiosInstance.get<ApiResponse<Record<string, unknown>>>('/auth/me');
+      if (data.success && data.data) {
+        return { success: true, data: transformUser(data.data) };
+      }
+      return { success: false, error: 'Profil topilmadi' };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
-  getUser: async (id: string): Promise<ApiResponse<User>> => {
+  updateProfile: async (profileData: Partial<User>): Promise<ApiResponse<User>> => {
     try {
-      const { data } = await axiosInstance.get<ApiResponse<User>>(`/users/${id}`);
-      return data;
+      const { data } = await axiosInstance.put<ApiResponse<Record<string, unknown>>>('/users/profile', profileData);
+      if (data.success && data.data) {
+        return { success: true, data: transformUser(data.data) };
+      }
+      return { success: false, error: 'Profil yangilanmadi' };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
-  updateProfile: async (userData: Partial<User>): Promise<ApiResponse<User>> => {
+  getById: async (id: string): Promise<ApiResponse<User>> => {
     try {
-      const { data } = await axiosInstance.put<ApiResponse<User>>('/users/me', userData);
-      return data;
+      const { data } = await axiosInstance.get<ApiResponse<Record<string, unknown>>>(`/users/${id}`);
+      if (data.success && data.data) {
+        return { success: true, data: transformUser(data.data) };
+      }
+      return { success: false, error: 'Foydalanuvchi topilmadi' };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
-  updatePassword: async (data: { currentPassword: string; newPassword: string }): Promise<ApiResponse<null>> => {
+  uploadAvatar: async (file: File): Promise<ApiResponse<{ url: string }>> => {
     try {
-      await axiosInstance.put('/users/me/password', data);
-      return { success: true };
+      const formData = new FormData();
+      formData.append('file', file);
+      const { data } = await axiosInstance.post('/upload/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      // Backend turli formatda javob qaytarishi mumkin
+      if (data.success && data.data) {
+        return { success: true, data: { url: data.data.url } };
+      }
+      // Agar to'g'ridan-to'g'ri data.url qaytarsa
+      if (data.url) {
+        return { success: true, data: { url: data.url } };
+      }
+      return { success: false, error: data.error || 'Avatar yuklashda xatolik' };
     } catch (error) {
+      console.error('Avatar upload error:', error);
       return { success: false, error: handleError(error) };
     }
   },
 
-  updateAvatar: async (avatar: string): Promise<ApiResponse<User>> => {
+  uploadResume: async (file: File): Promise<ApiResponse<{ url: string }>> => {
     try {
-      const { data } = await axiosInstance.put<ApiResponse<User>>('/users/me/avatar', { avatar });
-      return data;
-    } catch (error) {
-      return { success: false, error: handleError(error) };
-    }
-  },
-
-  updateCompany: async (companyData: { companyName?: string; companyDescription?: string; website?: string; companySize?: string }): Promise<ApiResponse<User>> => {
-    try {
-      const { data } = await axiosInstance.put<ApiResponse<User>>('/users/me/company', companyData);
-      return data;
-    } catch (error) {
-      return { success: false, error: handleError(error) };
-    }
-  },
-
-  updateFcmToken: async (fcmToken: string): Promise<ApiResponse<null>> => {
-    try {
-      await axiosInstance.put('/users/me/fcm-token', { fcmToken });
-      return { success: true };
+      const formData = new FormData();
+      formData.append('file', file);
+      const { data } = await axiosInstance.post<{ success: boolean; data: { url: string; filename: string; size: number }; error?: string }>('/upload/resume', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (data.success && data.data) {
+        return { success: true, data: { url: data.data.url } };
+      }
+      return { success: false, error: data.error || 'Rezyume yuklashda xatolik' };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
@@ -780,11 +725,6 @@ export const usersApi = {
 
 export const categoriesApi = {
   getAll: async (): Promise<ApiResponse<Category[]>> => {
-    if (DEMO_MODE) {
-      await delay(200);
-      return { success: true, data: DEMO_CATEGORIES };
-    }
-    
     try {
       const { data } = await axiosInstance.get<ApiResponse<Category[]>>('/categories');
       return data;
@@ -793,21 +733,12 @@ export const categoriesApi = {
     }
   },
 
-  getOne: async (id: string): Promise<ApiResponse<Category>> => {
+  getById: async (id: string): Promise<ApiResponse<Category>> => {
     try {
       const { data } = await axiosInstance.get<ApiResponse<Category>>(`/categories/${id}`);
       return data;
     } catch (error) {
       return { success: false, error: handleError(error) };
-    }
-  },
-
-  getJobs: async (id: string, params?: { page?: number; limit?: number }): Promise<JobsResponse> => {
-    try {
-      const { data } = await axiosInstance.get<JobsResponse>(`/categories/${id}/jobs`, { params });
-      return data;
-    } catch (error) {
-      return { success: false, data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
     }
   },
 };
@@ -819,17 +750,24 @@ export const categoriesApi = {
 export const chatApi = {
   getRooms: async (): Promise<ApiResponse<ChatRoom[]>> => {
     try {
-      const { data } = await axiosInstance.get<ApiResponse<ChatRoom[]>>('/chat/rooms');
-      return data;
+      const { data } = await axiosInstance.get<ChatRoom[]>('/chat/rooms');
+      // Transform backend response
+      const rooms = (data || []).map((room: any) => ({
+        ...room,
+        participants: room.participants || [],
+        lastMessage: room.lastMessage?.content || room.messages?.[0]?.content || '',
+        lastMessageAt: room.lastMessage?.createdAt || room.messages?.[0]?.createdAt || room.updatedAt,
+      }));
+      return { success: true, data: rooms };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
-  createRoom: async (userId: string, jobId?: string): Promise<ApiResponse<{ id: string }>> => {
+  createRoom: async (participantId: string, jobId?: string): Promise<ApiResponse<ChatRoom>> => {
     try {
-      const { data } = await axiosInstance.post<ApiResponse<{ id: string }>>('/chat/rooms', { userId, jobId });
-      return data;
+      const { data } = await axiosInstance.post<ChatRoom>('/chat/rooms', { participantId, jobId });
+      return { success: true, data };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
@@ -837,17 +775,31 @@ export const chatApi = {
 
   getMessages: async (roomId: string, params?: { before?: string; limit?: number }): Promise<ApiResponse<ChatMessage[]>> => {
     try {
-      const { data } = await axiosInstance.get<ApiResponse<ChatMessage[]>>(`/chat/rooms/${roomId}/messages`, { params });
-      return data;
+      // Request all messages (max 200) by default
+      const queryParams = { limit: 200, ...params };
+      const { data } = await axiosInstance.get<{ messages: any[]; pagination: any }>(`/chat/rooms/${roomId}/messages`, { params: queryParams });
+      // Transform backend response (chatRoomId -> roomId, content stays same)
+      const messages = (data.messages || []).map((msg: any) => ({
+        ...msg,
+        roomId: msg.chatRoomId || roomId,
+        content: msg.content || msg.message || '',
+      }));
+      return { success: true, data: messages };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
-  sendMessage: async (roomId: string, content: string, type?: string): Promise<ApiResponse<ChatMessage>> => {
+  sendMessage: async (roomId: string, content: string): Promise<ApiResponse<ChatMessage>> => {
     try {
-      const { data } = await axiosInstance.post<ApiResponse<ChatMessage>>(`/chat/rooms/${roomId}/messages`, { content, type });
-      return data;
+      const { data } = await axiosInstance.post<any>(`/chat/rooms/${roomId}/messages`, { content });
+      // Transform response
+      const message: ChatMessage = {
+        ...data,
+        roomId: data.chatRoomId || roomId,
+        content: data.content || data.message || content,
+      };
+      return { success: true, data: message };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
@@ -855,19 +807,28 @@ export const chatApi = {
 
   markAsRead: async (roomId: string): Promise<ApiResponse<null>> => {
     try {
-      await axiosInstance.put(`/chat/rooms/${roomId}/read`);
+      await axiosInstance.post(`/chat/rooms/${roomId}/read`);
       return { success: true };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
-  getUnreadCount: async (): Promise<ApiResponse<{ count: number }>> => {
+  deleteMessage: async (messageId: string): Promise<ApiResponse<null>> => {
     try {
-      const { data } = await axiosInstance.get<ApiResponse<{ count: number }>>('/chat/unread-count');
-      return data;
+      await axiosInstance.delete(`/chat/messages/${messageId}`);
+      return { success: true };
     } catch (error) {
       return { success: false, error: handleError(error) };
+    }
+  },
+
+  getUnreadCount: async (): Promise<ApiResponse<number>> => {
+    try {
+      const { data } = await axiosInstance.get<ApiResponse<number>>('/chat/unread-count');
+      return data;
+    } catch (error) {
+      return { success: false, data: 0, error: handleError(error) };
     }
   },
 };
@@ -877,27 +838,24 @@ export const chatApi = {
 // ============================================
 
 export const notificationsApi = {
-  getAll: async (params?: { unreadOnly?: string; page?: number; limit?: number }): Promise<NotificationsResponse> => {
+  getAll: async (params?: { page?: number; limit?: number; unreadOnly?: boolean }): Promise<NotificationsResponse> => {
     try {
-      const { data } = await axiosInstance.get<NotificationsResponse>('/notifications', { params });
-      return data;
+      const { data } = await axiosInstance.get<{ notifications: Notification[]; pagination: Pagination; unreadCount: number }>('/notifications', { params });
+      // Transform backend response to frontend format
+      return {
+        success: true,
+        data: data.notifications || [],
+        pagination: data.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 },
+        unreadCount: data.unreadCount || 0,
+      };
     } catch (error) {
       return { success: false, data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 }, unreadCount: 0 };
     }
   },
 
-  getUnreadCount: async (): Promise<ApiResponse<{ count: number }>> => {
-    try {
-      const { data } = await axiosInstance.get<ApiResponse<{ count: number }>>('/notifications/unread-count');
-      return data;
-    } catch (error) {
-      return { success: false, error: handleError(error) };
-    }
-  },
-
   markAsRead: async (id: string): Promise<ApiResponse<Notification>> => {
     try {
-      const { data } = await axiosInstance.put<ApiResponse<Notification>>(`/notifications/${id}/read`);
+      const { data } = await axiosInstance.post<ApiResponse<Notification>>(`/notifications/${id}/read`);
       return data;
     } catch (error) {
       return { success: false, error: handleError(error) };
@@ -906,7 +864,7 @@ export const notificationsApi = {
 
   markAllAsRead: async (): Promise<ApiResponse<null>> => {
     try {
-      await axiosInstance.put('/notifications/read-all');
+      await axiosInstance.post('/notifications/read-all');
       return { success: true };
     } catch (error) {
       return { success: false, error: handleError(error) };
@@ -930,6 +888,15 @@ export const notificationsApi = {
       return { success: false, error: handleError(error) };
     }
   },
+
+  getUnreadCount: async (): Promise<ApiResponse<{ unreadCount: number }>> => {
+    try {
+      const { data } = await axiosInstance.get<{ unreadCount: number }>('/notifications/unread-count');
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, data: { unreadCount: 0 }, error: handleError(error) };
+    }
+  },
 };
 
 // ============================================
@@ -937,10 +904,20 @@ export const notificationsApi = {
 // ============================================
 
 export const adminApi = {
-  getStats: async (): Promise<ApiResponse<DashboardStats>> => {
+  getDashboard: async (): Promise<ApiResponse<DashboardStats>> => {
     try {
-      const { data } = await axiosInstance.get<ApiResponse<DashboardStats>>('/admin/stats');
-      return data;
+      const { data } = await axiosInstance.get<DashboardStats>('/admin/dashboard');
+      // Backend to'g'ridan-to'g'ri data qaytaradi, success wrapper yo'q
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  getAnalytics: async (period?: string): Promise<ApiResponse<Record<string, unknown>>> => {
+    try {
+      const { data } = await axiosInstance.get<Record<string, unknown>>('/admin/analytics', { params: { period } });
+      return { success: true, data };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
@@ -948,107 +925,244 @@ export const adminApi = {
 
   getUsers: async (params?: { search?: string; role?: string; isVerified?: string; page?: number; limit?: number }): Promise<UsersResponse> => {
     try {
-      const { data } = await axiosInstance.get<UsersResponse>('/admin/users', { params });
-      return data;
+      const { data } = await axiosInstance.get<{ users: Array<Record<string, unknown>>; pagination: { page: number; limit: number; total: number; totalPages: number } }>('/admin/users', { params });
+      // Transform users and wrap in expected format
+      return {
+        success: true,
+        data: data.users.map(u => transformUser(u)),
+        pagination: data.pagination
+      };
     } catch (error) {
       return { success: false, data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
     }
   },
 
-  updateUserRole: async (id: string, role: string): Promise<ApiResponse<User>> => {
+  verifyUser: async (id: string): Promise<ApiResponse<User>> => {
     try {
-      const { data } = await axiosInstance.put<ApiResponse<User>>(`/admin/users/${id}/role`, { role });
-      return data;
+      const { data } = await axiosInstance.put<Record<string, unknown>>(`/admin/users/${id}/verify`);
+      return { success: true, data: transformUser(data) };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
-  verifyUser: async (id: string, isVerified: boolean): Promise<ApiResponse<User>> => {
+  blockUser: async (id: string, reason?: string): Promise<ApiResponse<User>> => {
     try {
-      const { data } = await axiosInstance.put<ApiResponse<User>>(`/admin/users/${id}/verify`, { isVerified });
-      return data;
+      const { data } = await axiosInstance.put<Record<string, unknown>>(`/admin/users/${id}/block`, { reason });
+      return { success: true, data: transformUser(data) };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
-  blockUser: async (id: string, isBlocked: boolean, blockReason?: string): Promise<ApiResponse<User>> => {
+  unblockUser: async (id: string): Promise<ApiResponse<User>> => {
     try {
-      const { data } = await axiosInstance.put<ApiResponse<User>>(`/admin/users/${id}/block`, { isBlocked, blockReason });
-      return data;
+      const { data } = await axiosInstance.put<Record<string, unknown>>(`/admin/users/${id}/unblock`);
+      return { success: true, data: transformUser(data) };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
-  deleteUser: async (id: string): Promise<ApiResponse<null>> => {
+  updateUser: async (id: string, userData: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+    password?: string;
+    role?: string;
+    region?: string;
+    isVerified?: boolean;
+    isBlocked?: boolean;
+  }): Promise<ApiResponse<User>> => {
     try {
-      await axiosInstance.delete(`/admin/users/${id}`);
-      return { success: true };
+      const { data } = await axiosInstance.put<Record<string, unknown>>(`/admin/users/${id}`, userData);
+      return { success: true, data: transformUser(data) };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
-  getJobs: async (params?: { search?: string; status?: string; page?: number; limit?: number }): Promise<JobsResponse> => {
+  getUserById: async (id: string): Promise<ApiResponse<User>> => {
     try {
-      const { data } = await axiosInstance.get<JobsResponse>('/admin/jobs', { params });
-      return data;
+      const { data } = await axiosInstance.get<Record<string, unknown>>(`/admin/users/${id}`);
+      return { success: true, data: transformUser(data) };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  getPendingJobs: async (params?: { page?: number; limit?: number }): Promise<JobsResponse> => {
+    try {
+      const { data } = await axiosInstance.get<{ jobs: Array<Record<string, unknown>>; pagination: { page: number; limit: number; total: number; totalPages: number } }>('/admin/jobs/pending', { params });
+      return {
+        success: true,
+        data: data.jobs ? data.jobs.map(job => transformJob(job)) : [],
+        pagination: data.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 }
+      };
     } catch (error) {
       return { success: false, data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
     }
   },
 
-  updateJobStatus: async (id: string, status: string, rejectionReason?: string): Promise<ApiResponse<Job>> => {
+  getAllJobs: async (params?: { page?: number; limit?: number; status?: string }): Promise<JobsResponse> => {
     try {
-      const { data } = await axiosInstance.put<ApiResponse<Job>>(`/admin/jobs/${id}/status`, { status, rejectionReason });
-      return data;
+      const { data } = await axiosInstance.get<{ jobs: Array<Record<string, unknown>>; pagination: { page: number; limit: number; total: number; totalPages: number } }>('/admin/jobs', { params });
+      return {
+        success: true,
+        data: data.jobs ? data.jobs.map(job => transformJob(job)) : [],
+        pagination: data.pagination || { page: 1, limit: 10, total: 0, totalPages: 0 }
+      };
+    } catch (error) {
+      return { success: false, data: [], pagination: { page: 1, limit: 10, total: 0, totalPages: 0 } };
+    }
+  },
+
+  approveJob: async (id: string): Promise<ApiResponse<Job>> => {
+    try {
+      const { data } = await axiosInstance.put<Record<string, unknown>>(`/admin/jobs/${id}/approve`);
+      return { success: true, data: transformJob(data) };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
-  deleteJob: async (id: string): Promise<ApiResponse<null>> => {
+  rejectJob: async (id: string, reason?: string): Promise<ApiResponse<Job>> => {
     try {
-      await axiosInstance.delete(`/admin/jobs/${id}`);
+      const { data } = await axiosInstance.put<Record<string, unknown>>(`/admin/jobs/${id}/reject`, { reason });
+      return { success: true, data: transformJob(data) };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  featureJob: async (id: string): Promise<ApiResponse<Job>> => {
+    try {
+      const { data } = await axiosInstance.put<Record<string, unknown>>(`/admin/jobs/${id}/feature`);
+      return { success: true, data: transformJob(data) };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  unfeatureJob: async (id: string): Promise<ApiResponse<Job>> => {
+    try {
+      const { data } = await axiosInstance.put<Record<string, unknown>>(`/admin/jobs/${id}/unfeature`);
+      return { success: true, data: transformJob(data) };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  broadcastNotification: async (notification: { title: string; message: string; type?: string; targetRole?: string }): Promise<ApiResponse<null>> => {
+    try {
+      await axiosInstance.post('/admin/notifications/broadcast', notification);
       return { success: true };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
   },
 
-  getCategories: async (): Promise<ApiResponse<Category[]>> => {
+  clearCache: async (): Promise<ApiResponse<null>> => {
     try {
-      const { data } = await axiosInstance.get<ApiResponse<Category[]>>('/admin/categories');
-      return data;
-    } catch (error) {
-      return { success: false, error: handleError(error) };
-    }
-  },
-
-  createCategory: async (categoryData: Partial<Category>): Promise<ApiResponse<Category>> => {
-    try {
-      const { data } = await axiosInstance.post<ApiResponse<Category>>('/admin/categories', categoryData);
-      return data;
-    } catch (error) {
-      return { success: false, error: handleError(error) };
-    }
-  },
-
-  updateCategory: async (id: string, categoryData: Partial<Category>): Promise<ApiResponse<Category>> => {
-    try {
-      const { data } = await axiosInstance.put<ApiResponse<Category>>(`/admin/categories/${id}`, categoryData);
-      return data;
-    } catch (error) {
-      return { success: false, error: handleError(error) };
-    }
-  },
-
-  deleteCategory: async (id: string): Promise<ApiResponse<null>> => {
-    try {
-      await axiosInstance.delete(`/admin/categories/${id}`);
+      await axiosInstance.post('/admin/cache/clear');
       return { success: true };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  // Chat Management
+  getChats: async (params?: { page?: number; limit?: number; search?: string }): Promise<ApiResponse<{ data: any[]; pagination: any }>> => {
+    try {
+      const { data } = await axiosInstance.get('/admin/chats', { params });
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  getChatMessages: async (roomId: string, params?: { page?: number; limit?: number }): Promise<ApiResponse<{ room: any; messages: any[]; pagination: any }>> => {
+    try {
+      const { data } = await axiosInstance.get(`/admin/chats/${roomId}`, { params });
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  deleteChat: async (roomId: string): Promise<ApiResponse<null>> => {
+    try {
+      await axiosInstance.post(`/admin/chats/${roomId}/delete`);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  deleteChatMessage: async (messageId: string): Promise<ApiResponse<null>> => {
+    try {
+      await axiosInstance.post(`/admin/chats/messages/${messageId}/delete`);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  // Reports Management
+  getReports: async (params?: { page?: number; limit?: number; status?: string; type?: string; search?: string }): Promise<ApiResponse<{ data: Report[]; pagination: Pagination }>> => {
+    try {
+      const { data } = await axiosInstance.get('/reports', { params });
+      return { success: true, data: { data: data.data || [], pagination: data.pagination } };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  getReportStats: async (): Promise<ApiResponse<{ total: number; new: number; reviewing: number; resolved: number; dismissed: number }>> => {
+    try {
+      const { data } = await axiosInstance.get('/reports/stats');
+      return { success: true, data: data.data };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  updateReport: async (id: string, update: { status?: string; adminNote?: string }): Promise<ApiResponse<Report>> => {
+    try {
+      const { data } = await axiosInstance.put(`/reports/${id}`, update);
+      return { success: true, data: data.data };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+
+  deleteReport: async (id: string): Promise<ApiResponse<null>> => {
+    try {
+      await axiosInstance.delete(`/reports/${id}`);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: handleError(error) };
+    }
+  },
+};
+
+// ============================================
+// REPORTS API (for users to submit reports)
+// ============================================
+
+export const reportsApi = {
+  // Create a new report (any authenticated user)
+  create: async (data: {
+    type: 'SPAM' | 'INAPPROPRIATE' | 'FAKE' | 'FRAUD' | 'HARASSMENT' | 'OTHER';
+    reason: string;
+    description?: string;
+    reportedId?: string;
+    jobId?: string;
+  }): Promise<ApiResponse<Report>> => {
+    try {
+      const { data: response } = await axiosInstance.post('/reports', data);
+      return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: handleError(error) };
     }
@@ -1068,6 +1182,7 @@ export const api = {
   chat: chatApi,
   notifications: notificationsApi,
   admin: adminApi,
+  reports: reportsApi,
 };
 
 export default api;

@@ -1,10 +1,17 @@
-import { useState, useEffect } from 'react';
-import { io, Socket } from 'socket.io-client';
-import type { Notification as NotificationModel } from '@/types';
-import { logger } from '@/lib/logger';
 import { useAuth } from '@/contexts/AuthContext';
+import { logger } from '@/lib/logger';
+import type { Notification as NotificationModel } from '@/types';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { io, Socket } from 'socket.io-client';
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// Dinamik Socket URL - network IP uchun
+const getSocketUrl = () => {
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return `http://${window.location.hostname}:5000`;
+  }
+  return import.meta.env.VITE_SOCKET_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000';
+};
+
 const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
 
 /**
@@ -12,10 +19,11 @@ const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === 'true';
  * Socket.io orqali jonli xabarnomalar
  */
 export function useRealTimeNotifications() {
-  const [socket, setSocket] = useState<Socket | null>(null);
+  const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [newNotification, setNewNotification] = useState<NotificationModel | null>(null);
   const { user, isAuthenticated } = useAuth();
+  const isConnectingRef = useRef(false);
 
   useEffect(() => {
     // Demo mode da Socket.io ni o'chirish
@@ -25,27 +33,39 @@ export function useRealTimeNotifications() {
 
     if (!isAuthenticated || !user) {
       // Disconnect if not authenticated
-      if (socket) {
-        socket.disconnect();
-        setSocket(null);
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
         setIsConnected(false);
       }
       return;
     }
 
+    // Already connected or connecting
+    if (socketRef.current?.connected || isConnectingRef.current) {
+      return;
+    }
+
+    isConnectingRef.current = true;
+
     // Initialize Socket.io connection
-    const newSocket = io(SOCKET_URL, {
+    const socketUrl = getSocketUrl();
+    const token = localStorage.getItem('vakans_token');
+
+    const newSocket = io(`${socketUrl}/notifications`, {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionDelay: 1000,
       reconnectionAttempts: 5,
       auth: {
+        token: token,
         userId: user.id,
       },
     });
 
     newSocket.on('connect', () => {
       setIsConnected(true);
+      isConnectingRef.current = false;
       logger.info('Socket connected', { userId: user.id });
     });
 
@@ -56,6 +76,7 @@ export function useRealTimeNotifications() {
 
     newSocket.on('connect_error', (error) => {
       setIsConnected(false);
+      isConnectingRef.current = false;
       logger.error('Socket connection error', error);
     });
 
@@ -63,7 +84,7 @@ export function useRealTimeNotifications() {
     newSocket.on('notification', (notification: NotificationModel) => {
       logger.info('New notification received', { notification });
       setNewNotification(notification);
-      
+
       // Request notification permission and show browser notification
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification(notification.title, {
@@ -78,7 +99,6 @@ export function useRealTimeNotifications() {
     // Listen for new messages
     newSocket.on('new_message', (data) => {
       logger.info('New message received', { data });
-      // You can handle new messages separately if needed
     });
 
     // Listen for job updates
@@ -91,13 +111,17 @@ export function useRealTimeNotifications() {
       logger.info('Application update received', { data });
     });
 
-    setSocket(newSocket);
+    socketRef.current = newSocket;
 
     // Cleanup on unmount
     return () => {
-      newSocket.disconnect();
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+      isConnectingRef.current = false;
     };
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user?.id]);
 
   // Request notification permission
   useEffect(() => {
@@ -108,16 +132,16 @@ export function useRealTimeNotifications() {
     }
   }, []);
 
-  const sendMessage = (event: string, data: unknown) => {
-    if (socket && isConnected) {
-      socket.emit(event, data);
+  const sendMessage = useCallback((event: string, data: unknown) => {
+    if (socketRef.current && isConnected) {
+      socketRef.current.emit(event, data);
     } else {
       logger.warn('Socket not connected, cannot send message', { event, data });
     }
-  };
+  }, [isConnected]);
 
   return {
-    socket,
+    socket: socketRef.current,
     isConnected,
     newNotification,
     sendMessage,

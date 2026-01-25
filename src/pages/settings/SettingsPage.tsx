@@ -1,10 +1,10 @@
-﻿import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { usersApi } from '@/lib/api';
-import { Settings, Moon, Sun, Lock, LogOut } from 'lucide-react';
-import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+﻿import { useAuth } from '@/contexts/AuthContext';
+import { authApi } from '@/lib/api';
 import { motion } from 'framer-motion';
+import { ArrowLeft, Lock, LogOut, Moon, Settings, Sun } from 'lucide-react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export function SettingsPage() {
   const { logout } = useAuth();
@@ -50,10 +50,10 @@ export function SettingsPage() {
     }
     setIsLoading(true);
     try {
-      const res = await usersApi.updatePassword({
-        currentPassword: passwordData.currentPassword,
-        newPassword: passwordData.newPassword,
-      });
+      const res = await authApi.changePassword(
+        passwordData.currentPassword,
+        passwordData.newPassword,
+      );
       if (res.success) {
         toast.success('Parol yangilandi');
         setShowPasswordForm(false);
@@ -90,13 +90,26 @@ export function SettingsPage() {
 
   return (
     <div className="min-h-screen bg-secondary-50 dark:bg-secondary-950 py-8 px-4">
-      <motion.div 
+      <motion.div
         className="max-w-3xl mx-auto"
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        <motion.h1 
+        {/* Ortga tugmasi */}
+        <motion.div variants={itemVariants} className="mb-6">
+          <motion.button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary-100 dark:bg-secondary-800 hover:bg-secondary-200 dark:hover:bg-secondary-700 text-secondary-700 dark:text-secondary-300 font-medium transition-colors"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <ArrowLeft className="w-5 h-5" />
+            Orqaga
+          </motion.button>
+        </motion.div>
+
+        <motion.h1
           variants={itemVariants}
           className="text-3xl font-bold text-secondary-900 dark:text-white mb-8 flex items-center gap-3"
         >
@@ -106,7 +119,7 @@ export function SettingsPage() {
 
         <div className="space-y-6">
           {/* Ko'rinish */}
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="bg-white dark:bg-secondary-900 rounded-2xl p-6 shadow-sm border border-secondary-200 dark:border-secondary-800"
           >
@@ -119,11 +132,11 @@ export function SettingsPage() {
                   <p className="text-sm text-secondary-500">Interfeys rangini o'zgartiring</p>
                 </div>
               </div>
-              <button 
-                onClick={toggleTheme} 
+              <button
+                onClick={toggleTheme}
                 className={`relative w-14 h-7 rounded-full transition-colors ${isDark ? 'bg-primary-500' : 'bg-secondary-200'}`}
               >
-                <motion.div 
+                <motion.div
                   className="absolute top-1 w-5 h-5 rounded-full bg-white shadow-md"
                   animate={{ x: isDark ? 30 : 4 }}
                   transition={{ type: 'spring', stiffness: 500, damping: 30 }}
@@ -133,7 +146,7 @@ export function SettingsPage() {
           </motion.div>
 
           {/* Xavfsizlik */}
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="bg-white dark:bg-secondary-900 rounded-2xl p-6 shadow-sm border border-secondary-200 dark:border-secondary-800"
           >
@@ -144,10 +157,10 @@ export function SettingsPage() {
                   <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
                     Joriy parol
                   </label>
-                  <input 
-                    type="password" 
-                    value={passwordData.currentPassword} 
-                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })} 
+                  <input
+                    type="password"
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl border border-secondary-200 dark:border-secondary-700 bg-white dark:bg-secondary-800 text-secondary-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                   />
                 </div>
@@ -155,10 +168,10 @@ export function SettingsPage() {
                   <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
                     Yangi parol
                   </label>
-                  <input 
-                    type="password" 
-                    value={passwordData.newPassword} 
-                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })} 
+                  <input
+                    type="password"
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl border border-secondary-200 dark:border-secondary-700 bg-white dark:bg-secondary-800 text-secondary-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                   />
                 </div>
@@ -166,26 +179,26 @@ export function SettingsPage() {
                   <label className="block text-sm font-medium text-secondary-700 dark:text-secondary-300 mb-1">
                     Parolni tasdiqlash
                   </label>
-                  <input 
-                    type="password" 
-                    value={passwordData.confirmPassword} 
-                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })} 
+                  <input
+                    type="password"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                     className="w-full px-4 py-3 rounded-xl border border-secondary-200 dark:border-secondary-700 bg-white dark:bg-secondary-800 text-secondary-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                   />
                 </div>
                 <div className="flex gap-3 pt-2">
-                  <motion.button 
-                    type="submit" 
-                    disabled={isLoading} 
+                  <motion.button
+                    type="submit"
+                    disabled={isLoading}
                     className="px-6 py-3 bg-primary-500 text-white rounded-xl hover:bg-primary-600 disabled:opacity-50 font-medium shadow-lg shadow-primary-500/25 transition-all"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
                     {isLoading ? 'Yuklanmoqda...' : 'Saqlash'}
                   </motion.button>
-                  <motion.button 
-                    type="button" 
-                    onClick={() => setShowPasswordForm(false)} 
+                  <motion.button
+                    type="button"
+                    onClick={() => setShowPasswordForm(false)}
                     className="px-6 py-3 bg-secondary-100 dark:bg-secondary-800 text-secondary-700 dark:text-secondary-300 rounded-xl hover:bg-secondary-200 dark:hover:bg-secondary-700 font-medium transition-all"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -195,8 +208,8 @@ export function SettingsPage() {
                 </div>
               </form>
             ) : (
-              <motion.button 
-                onClick={() => setShowPasswordForm(true)} 
+              <motion.button
+                onClick={() => setShowPasswordForm(true)}
                 className="flex items-center gap-3 w-full p-4 rounded-xl hover:bg-secondary-50 dark:hover:bg-secondary-800 transition-colors border border-secondary-100 dark:border-secondary-800"
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
@@ -211,13 +224,13 @@ export function SettingsPage() {
           </motion.div>
 
           {/* Hisob */}
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="bg-white dark:bg-secondary-900 rounded-2xl p-6 shadow-sm border border-secondary-200 dark:border-secondary-800"
           >
             <h2 className="text-lg font-semibold text-secondary-900 dark:text-white mb-4">Hisob</h2>
-            <motion.button 
-              onClick={handleLogout} 
+            <motion.button
+              onClick={handleLogout}
               className="flex items-center gap-3 w-full p-4 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors text-red-500 border border-red-100 dark:border-red-900/30"
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}

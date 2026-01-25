@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "jobs" ALTER COLUMN "salary_min" SET DATA TYPE BIGINT,
+ALTER COLUMN "salary_max" SET DATA TYPE BIGINT;

@@ -1,0 +1,327 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String         @id @default(cuid())
+  phone              String         @unique
+  password           String
+  firstName          String         @map("first_name")
+  lastName           String?        @map("last_name")
+  role               UserRole       @default(WORKER)
+  avatar             String?
+  email              String?        @unique
+  bio                String?
+  region             String?
+  location           String?
+  skills             String[]
+  experienceYears    Int?           @map("experience_years")
+  education          String?
+  languages          String[]
+  resumeUrl          String?        @map("resume_url")
+  companyName        String?        @map("company_name")
+  companyDescription String?        @map("company_description")
+  companyLogo        String?        @map("company_logo")
+  website            String?
+  isVerified         Boolean        @default(false) @map("is_verified")
+  isBlocked          Boolean        @default(false) @map("is_blocked")
+  lastActiveAt       DateTime?      @map("last_active_at")
+  createdAt          DateTime       @default(now()) @map("created_at")
+  updatedAt          DateTime       @updatedAt @map("updated_at")
+  lastSeenAt         DateTime?      @map("last_seen_at")
+  applications       Application[]
+  sentMessages       ChatMessage[]  @relation("SentMessages")
+  jobReactions       JobReaction[]
+  jobs               Job[]
+  notifications      Notification[]
+  refreshTokens      RefreshToken[]
+  savedJobs          SavedJob[]
+  chatRooms          ChatRoom[]     @relation("ChatRoomToUser")
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  nameUz    String?  @map("name_uz")
+  nameRu    String?  @map("name_ru")
+  nameEn    String?  @map("name_en")
+  slug      String   @unique
+  icon      String?
+  color     String?
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  jobs      Job[]
+
+  @@map("categories")
+}
+
+model Job {
+  id                 String        @id @default(cuid())
+  employerId         String        @map("employer_id")
+  categoryId         String?       @map("category_id")
+  title              String
+  description        String
+  requirements       String[]
+  benefits           String[]
+  salaryMin          BigInt?       @map("salary_min")
+  salaryMax          BigInt?       @map("salary_max")
+  salaryType         SalaryType    @default(MONTHLY) @map("salary_type")
+  currency           String        @default("UZS")
+  location           String?
+  region             String?
+  address            String?
+  workType           WorkType      @default(FULL_TIME) @map("work_type")
+  experienceRequired String?       @map("experience_required")
+  educationRequired  String?       @map("education_required")
+  languagesRequired  String[]      @map("languages_required")
+  contactPhone       String?       @map("contact_phone")
+  contactEmail       String?       @map("contact_email")
+  isFeatured         Boolean       @default(false) @map("is_featured")
+  isUrgent           Boolean       @default(false) @map("is_urgent")
+  status             JobStatus     @default(PENDING)
+  rejectionReason    String?       @map("rejection_reason")
+  viewsCount         Int           @default(0) @map("views_count")
+  applicationsCount  Int           @default(0) @map("applications_count")
+  likesCount         Int           @default(0) @map("likes_count")
+  dislikesCount      Int           @default(0) @map("dislikes_count")
+  deadline           DateTime?
+  expiresAt          DateTime?     @map("expires_at")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+  applications       Application[]
+  chatRooms          ChatRoom[]
+  reactions          JobReaction[]
+  category           Category?     @relation(fields: [categoryId], references: [id])
+  employer           User          @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  savedBy            SavedJob[]
+
+  @@index([employerId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([workType])
+  @@index([region])
+  @@index([createdAt(sort: Desc)])
+  @@map("jobs")
+}
+
+model Application {
+  id              String            @id @default(cuid())
+  jobId           String            @map("job_id")
+  workerId        String            @map("worker_id")
+  coverLetter     String?           @map("cover_letter")
+  resumeUrl       String?           @map("resume_url")
+  status          ApplicationStatus @default(PENDING)
+  employerNotes   String?           @map("employer_notes")
+  rejectionReason String?           @map("rejection_reason")
+  viewedAt        DateTime?         @map("viewed_at")
+  respondedAt     DateTime?         @map("responded_at")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  job             Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  worker          User              @relation(fields: [workerId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, workerId])
+  @@index([workerId])
+  @@index([jobId])
+  @@index([status])
+  @@map("applications")
+}
+
+model SavedJob {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  jobId     String   @map("job_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@map("saved_jobs")
+}
+
+model JobReaction {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  jobId     String   @map("job_id")
+  isLike    Boolean  @map("is_like")
+  createdAt DateTime @default(now()) @map("created_at")
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, jobId])
+  @@map("job_reactions")
+}
+
+model ChatRoom {
+  id            String        @id @default(cuid())
+  jobId         String?       @map("job_id")
+  lastMessageAt DateTime?     @map("last_message_at")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  messages      ChatMessage[]
+  job           Job?          @relation(fields: [jobId], references: [id])
+  participants  User[]        @relation("ChatRoomToUser")
+
+  @@index([jobId])
+  @@map("chat_rooms")
+}
+
+model ChatMessage {
+  id         String      @id @default(cuid())
+  chatRoomId String      @map("chat_room_id")
+  senderId   String      @map("sender_id")
+  content    String
+  type       MessageType @default(TEXT)
+  fileUrl    String?     @map("file_url")
+  fileName   String?     @map("file_name")
+  fileSize   Int?        @map("file_size")
+  isRead     Boolean     @default(false) @map("is_read")
+  readAt     DateTime?   @map("read_at")
+  isDeleted  Boolean     @default(false) @map("is_deleted")
+  createdAt  DateTime    @default(now()) @map("created_at")
+  chatRoom   ChatRoom    @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  sender     User        @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([chatRoomId])
+  @@index([senderId])
+  @@map("chat_messages")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String           @map("user_id")
+  type      NotificationType
+  title     String
+  message   String?
+  data      Json?
+  link      String?
+  isRead    Boolean          @default(false) @map("is_read")
+  readAt    DateTime?        @map("read_at")
+  createdAt DateTime         @default(now()) @map("created_at")
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt(sort: Desc)])
+  @@map("notifications")
+}
+
+enum UserRole {
+  WORKER
+  EMPLOYER
+  ADMIN
+}
+
+enum WorkType {
+  FULL_TIME
+  PART_TIME
+  REMOTE
+  CONTRACT
+  TEMPORARY
+}
+
+enum SalaryType {
+  HOURLY
+  DAILY
+  MONTHLY
+  FIXED
+  NEGOTIABLE
+}
+
+enum JobStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  CLOSED
+  EXPIRED
+}
+
+enum ApplicationStatus {
+  PENDING
+  VIEWED
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum NotificationType {
+  APPLICATION
+  APPLICATION_RECEIVED
+  APPLICATION_ACCEPTED
+  APPLICATION_REJECTED
+  MESSAGE
+  NEW_MESSAGE
+  JOB_MATCH
+  JOB_EXPIRED
+  JOB_APPROVED
+  REMINDER
+  SYSTEM
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM
+}
+
+// =============================================
+// REPORTS (SHIKOYATLAR)
+// =============================================
+model Report {
+  id          String       @id @default(cuid())
+  type        ReportType
+  reason      String
+  description String?
+  reporterId  String       @map("reporter_id")
+  reportedId  String?      @map("reported_id")      // Shikoyat qilingan user
+  jobId       String?      @map("job_id")           // Shikoyat qilingan ish
+  status      ReportStatus @default(NEW)
+  adminNote   String?      @map("admin_note")
+  resolvedAt  DateTime?    @map("resolved_at")
+  resolvedBy  String?      @map("resolved_by")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@index([reporterId])
+  @@index([reportedId])
+  @@index([jobId])
+  @@index([status])
+  @@map("reports")
+}
+
+enum ReportType {
+  SPAM
+  INAPPROPRIATE
+  FAKE
+  FRAUD
+  HARASSMENT
+  OTHER
+}
+
+enum ReportStatus {
+  NEW
+  REVIEWING
+  RESOLVED
+  DISMISSED
+}

@@ -1,17 +1,24 @@
-import { Outlet } from 'react-router-dom'
-import { Header } from './Header'
-import { Footer } from './Footer'
+import { useAuth } from '@/contexts/AuthContext'
+import { Outlet, useLocation } from 'react-router-dom'
 import { BottomNav } from './BottomNav'
+import { Footer } from './Footer'
+import { Header } from './Header'
 
 export function Layout() {
+  const { isAuthenticated } = useAuth()
+  const location = useLocation()
+
+  // Footer faqat home page va login qilinmagan holda ko'rinadi
+  const showFooter = !isAuthenticated && (location.pathname === '/' || location.pathname === '/jobs')
+
   return (
     <div className="min-h-screen flex flex-col bg-secondary-50 dark:bg-secondary-950">
       <Header />
-      <main className="flex-1 pb-16 md:pb-0">
+      <main className={`flex-1 ${isAuthenticated ? 'pb-16 md:pb-0' : 'pb-0'}`}>
         <Outlet />
       </main>
-      <Footer />
-      <BottomNav />
+      {showFooter && <Footer />}
+      {isAuthenticated && <BottomNav />}
     </div>
   )
 }

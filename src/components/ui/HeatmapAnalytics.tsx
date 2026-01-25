@@ -1,7 +1,7 @@
-import { motion } from 'framer-motion';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { Activity, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+import { Activity, TrendingUp } from 'lucide-react';
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 interface HeatmapAnalyticsProps {
   data?: ApplicationHeatmapData[];
@@ -16,29 +16,8 @@ interface ApplicationHeatmapData {
   label: string;
 }
 
-// Demo data - replace with real data from backend
-const generateDemoData = (): ApplicationHeatmapData[] => {
-  const hours = Array.from({ length: 24 }, (_, i) => i);
-  return hours.map((hour) => {
-    // Simulate realistic application patterns
-    let count = 0;
-    if (hour >= 6 && hour < 9) count = Math.floor(Math.random() * 15) + 5; // Morning spike
-    else if (hour >= 9 && hour < 12) count = Math.floor(Math.random() * 25) + 15; // Peak morning
-    else if (hour >= 12 && hour < 14) count = Math.floor(Math.random() * 10) + 5; // Lunch dip
-    else if (hour >= 14 && hour < 18) count = Math.floor(Math.random() * 30) + 20; // Afternoon peak
-    else if (hour >= 18 && hour < 22) count = Math.floor(Math.random() * 20) + 10; // Evening
-    else count = Math.floor(Math.random() * 5); // Night
-
-    return {
-      hour,
-      count,
-      label: `${hour.toString().padStart(2, '0')}:00`,
-    };
-  });
-};
-
 export function HeatmapAnalytics({
-  data = generateDemoData(),
+  data = [],
   className,
   title = 'Arizalar heatmap',
   description = 'Qaysi soatlarda ko\'proq ariza keladi',
@@ -140,7 +119,7 @@ export function HeatmapAnalytics({
       {/* Insights */}
       <div className="mt-6 p-4 bg-secondary-50 dark:bg-secondary-800/50 rounded-xl">
         <p className="text-sm text-secondary-700 dark:text-secondary-300">
-          💡 <strong>Maslahat:</strong> Eng ko'p arizalar <strong>{peakHours}</strong> oralig'ida keladi. 
+          💡 <strong>Maslahat:</strong> Eng ko'p arizalar <strong>{peakHours}</strong> oralig'ida keladi.
           Yangi e'lonlarni shu vaqtda joylashtirish samaraliroq bo'ladi.
         </p>
       </div>

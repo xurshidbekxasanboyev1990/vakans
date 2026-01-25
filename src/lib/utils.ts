@@ -87,3 +87,23 @@ export function getInitials(name?: string): string {
   if (parts.length === 1) return parts[0].charAt(0).toUpperCase()
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
 }
+
+// Backend fayl URL ni to'liq URL ga aylantirish
+export function getFileUrl(path?: string | null): string | undefined {
+  if (!path) return undefined;
+  // Agar allaqachon to'liq URL bo'lsa
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  // Backend API URL
+  const apiBaseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
+  // Agar localhost bo'lmasa (tarmoqdan kirish), dinamik URL yasash
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    return `http://${window.location.hostname}:5000${path.startsWith('/') ? path : '/' + path}`;
+  }
+  // Localhost uchun
+  if (apiBaseUrl) {
+    return `${apiBaseUrl.replace('/api', '')}${path.startsWith('/') ? path : '/' + path}`;
+  }
+  return `http://localhost:5000${path.startsWith('/') ? path : '/' + path}`;
+}

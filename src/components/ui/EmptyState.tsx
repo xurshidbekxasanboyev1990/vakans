@@ -1,7 +1,8 @@
-import { motion } from 'framer-motion'
-import { FileQuestion, Search, AlertCircle, XCircle, CheckCircle } from 'lucide-react'
-import { Button } from './Button'
 import { cn } from '@/lib/utils'
+import { motion } from 'framer-motion'
+import { AlertCircle, CheckCircle, FileQuestion, Search, XCircle } from 'lucide-react'
+import { forwardRef } from 'react'
+import { Button } from './Button'
 
 type IconType = 'search' | 'error' | 'success' | 'notfound'
 
@@ -24,69 +25,73 @@ const iconMap: Record<IconType, React.FC<{ className?: string }>> = {
   notfound: FileQuestion,
 }
 
-export function EmptyState({ icon = 'notfound', title, description, action, className }: EmptyStateProps) {
-  const IconComponent = typeof icon === 'string' ? iconMap[icon as IconType] : null
+export const EmptyState = forwardRef<HTMLDivElement, EmptyStateProps>(
+  ({ icon = 'notfound', title, description, action, className }, ref) => {
+    const IconComponent = typeof icon === 'string' ? iconMap[icon as IconType] : null
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-      className={cn('flex flex-col items-center justify-center text-center py-16 px-4', className)}
-    >
-      {/* Icon */}
+    return (
       <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
-        className="mb-6 relative"
+        ref={ref}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className={cn('flex flex-col items-center justify-center text-center py-16 px-4', className)}
       >
-        <div className="absolute inset-0 bg-primary-500/10 rounded-full blur-2xl" />
-        <div className="relative bg-secondary-100 dark:bg-secondary-800 rounded-full p-6">
-          {IconComponent ? (
-            <IconComponent className="h-16 w-16 text-secondary-400 dark:text-secondary-500" />
-          ) : (
-            icon
-          )}
-        </div>
-      </motion.div>
+        {/* Icon */}
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.1, type: 'spring', stiffness: 200 }}
+          className="mb-6 relative"
+        >
+          <div className="absolute inset-0 bg-primary-500/10 rounded-full blur-2xl" />
+          <div className="relative bg-secondary-100 dark:bg-secondary-800 rounded-full p-6">
+            {IconComponent ? (
+              <IconComponent className="h-16 w-16 text-secondary-400 dark:text-secondary-500" />
+            ) : (
+              icon
+            )}
+          </div>
+        </motion.div>
 
-      {/* Text */}
-      <motion.h3
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
-        className="text-2xl font-semibold text-secondary-900 dark:text-white mb-2"
-      >
-        {title}
-      </motion.h3>
-
-      {description && (
-        <motion.p
+        {/* Text */}
+        <motion.h3
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="text-secondary-500 dark:text-secondary-400 max-w-md mb-6"
+          transition={{ delay: 0.2 }}
+          className="text-2xl font-semibold text-secondary-900 dark:text-white mb-2"
         >
-          {description}
-        </motion.p>
-      )}
+          {title}
+        </motion.h3>
 
-      {/* Action */}
-      {action && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <Button variant={action.variant || 'primary'} onClick={action.onClick}>
-            {action.label}
-          </Button>
-        </motion.div>
-      )}
-    </motion.div>
-  )
-}
+        {description && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="text-secondary-500 dark:text-secondary-400 max-w-md mb-6"
+          >
+            {description}
+          </motion.p>
+        )}
+
+        {/* Action */}
+        {action && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Button variant={action.variant || 'primary'} onClick={action.onClick}>
+              {action.label}
+            </Button>
+          </motion.div>
+        )}
+      </motion.div>
+    )
+  })
+
+EmptyState.displayName = 'EmptyState'
 
 // Pre-built empty states
 export function NoJobsFound({ onReset }: { onReset?: () => void }) {
@@ -98,10 +103,10 @@ export function NoJobsFound({ onReset }: { onReset?: () => void }) {
       action={
         onReset
           ? {
-              label: "Filtrlarni tozalash",
-              onClick: onReset,
-              variant: 'outline',
-            }
+            label: "Filtrlarni tozalash",
+            onClick: onReset,
+            variant: 'outline',
+          }
           : undefined
       }
     />
@@ -131,10 +136,10 @@ export function ErrorState({ message, onRetry }: { message?: string; onRetry?: (
       action={
         onRetry
           ? {
-              label: "Qayta urinish",
-              onClick: onRetry,
-              variant: 'primary',
-            }
+            label: "Qayta urinish",
+            onClick: onRetry,
+            variant: 'primary',
+          }
           : undefined
       }
     />
@@ -195,10 +200,10 @@ export function EmptySearchResults({ onReset }: { onReset?: () => void }) {
       action={
         onReset
           ? {
-              label: 'Tozalash',
-              onClick: onReset,
-              variant: 'outline',
-            }
+            label: 'Tozalash',
+            onClick: onReset,
+            variant: 'outline',
+          }
           : undefined
       }
     />

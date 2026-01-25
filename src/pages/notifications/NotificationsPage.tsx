@@ -1,14 +1,16 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Bell, Check, Trash2, Briefcase, MessageSquare, Clock } from 'lucide-react';
-import { notificationsApi } from '@/lib/api';
-import { Notification as NotificationModel } from '@/types';
-import { formatRelativeTime } from '@/lib/utils';
-import { Button, Badge, EmptyState, Skeleton } from '@/components/ui';
-import { toast } from 'sonner';
+import { Badge, Button, EmptyState, Skeleton } from '@/components/ui';
 import { useRealTimeNotifications } from '@/hooks/useRealTimeNotifications';
+import { notificationsApi } from '@/lib/api';
+import { formatRelativeTime } from '@/lib/utils';
+import { Notification as NotificationModel } from '@/types';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowLeft, Bell, Briefcase, Check, Clock, MessageSquare, Trash2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export function NotificationsPage() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<NotificationModel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
@@ -25,7 +27,7 @@ export function NotificationsPage() {
     if (newNotification) {
       setNotifications((prev) => [newNotification, ...prev]);
       setUnreadCount((prev) => prev + 1);
-      
+
       // Show toast notification
       toast.custom((t) => (
         <motion.div
@@ -47,7 +49,7 @@ export function NotificationsPage() {
               </p>
             </div>
             <button
-              onClick={() => toast.dismiss(t.id)}
+              onClick={() => toast.dismiss(String(t))}
               className="text-secondary-400 hover:text-secondary-600"
             >
               ×
@@ -61,65 +63,12 @@ export function NotificationsPage() {
   const fetchNotifications = async () => {
     setIsLoading(true);
     try {
-      // Demo mode - localStorage dan olish
-      if (import.meta.env.VITE_DEMO_MODE === 'true') {
-        const demoNotifications: NotificationModel[] = [
-          {
-            id: '1',
-            userId: '1',
-            type: 'application',
-            title: 'Arizangiz ko\'rib chiqilmoqda',
-            message: '"Senior Frontend Developer" ish o\'rni uchun arizangiz ishlab chiqaruvchi tomonidan ko\'rib chiqilmoqda.',
-            isRead: false,
-            createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-          },
-          {
-            id: '2',
-            userId: '1',
-            type: 'job_match',
-            title: 'Yangi vakansiya sizga mos',
-            message: '"React Developer" ish o\'rni sizning ko\'nikmalaringizga to\'liq mos keladi.',
-            isRead: false,
-            createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-          },
-          {
-            id: '3',
-            userId: '1',
-            type: 'message',
-            title: 'Yangi xabar',
-            message: 'Texnokrat kompaniyasidan sizga yangi xabar keldi.',
-            isRead: true,
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-          },
-          {
-            id: '4',
-            userId: '1',
-            type: 'reminder',
-            title: 'Profil to\'ldirish eslatmasi',
-            message: 'Profilingizni 100% to\'ldiring va ko\'proq ish takliflari oling!',
-            isRead: true,
-            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-            updatedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-          },
-        ];
+      const params = filter === 'unread' ? { unreadOnly: true } : {};
+      const response = await notificationsApi.getAll(params);
 
-        const filteredNotifications = filter === 'unread' 
-          ? demoNotifications.filter(n => !n.isRead)
-          : demoNotifications;
-
-        setNotifications(filteredNotifications);
-        setUnreadCount(demoNotifications.filter(n => !n.isRead).length);
-      } else {
-        const params = filter === 'unread' ? { unreadOnly: 'true' } : {};
-        const response = await notificationsApi.getAll(params);
-        
-        if (response.success) {
-          setNotifications(response.data || []);
-          setUnreadCount(response.unreadCount || 0);
-        }
+      if (response.success) {
+        setNotifications(response.data || []);
+        setUnreadCount(response.unreadCount || 0);
       }
     } catch (error) {
       toast.error('Xabarnomalarni yuklashda xatolik');
@@ -130,20 +79,12 @@ export function NotificationsPage() {
 
   const markAsRead = async (id: string) => {
     try {
-      if (import.meta.env.VITE_DEMO_MODE === 'true') {
+      const response = await notificationsApi.markAsRead(id);
+      if (response.success) {
         setNotifications((prev) =>
           prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
         );
         setUnreadCount((prev) => Math.max(0, prev - 1));
-        toast.success('O\'qilgan deb belgilandi');
-      } else {
-        const response = await notificationsApi.markAsRead(id);
-        if (response.success) {
-          setNotifications((prev) =>
-            prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-          );
-          setUnreadCount((prev) => Math.max(0, prev - 1));
-        }
       }
     } catch (error) {
       toast.error('Xatolik yuz berdi');
@@ -152,17 +93,11 @@ export function NotificationsPage() {
 
   const markAllAsRead = async () => {
     try {
-      if (import.meta.env.VITE_DEMO_MODE === 'true') {
+      const response = await notificationsApi.markAllAsRead();
+      if (response.success) {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
         setUnreadCount(0);
-        toast.success('Barchasi o\'qilgan');
-      } else {
-        const response = await notificationsApi.markAllAsRead();
-        if (response.success) {
-          setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-          setUnreadCount(0);
-          toast.success('Barcha xabarnomalar o\'qildi');
-        }
+        toast.success('Barcha xabarnomalar o\'qildi');
       }
     } catch (error) {
       toast.error('Xatolik yuz berdi');
@@ -171,15 +106,10 @@ export function NotificationsPage() {
 
   const deleteNotification = async (id: string) => {
     try {
-      if (import.meta.env.VITE_DEMO_MODE === 'true') {
+      const response = await notificationsApi.delete(id);
+      if (response.success) {
         setNotifications((prev) => prev.filter((n) => n.id !== id));
         toast.success('Xabarnoma o\'chirildi');
-      } else {
-        const response = await notificationsApi.delete(id);
-        if (response.success) {
-          setNotifications((prev) => prev.filter((n) => n.id !== id));
-          toast.success('Xabarnoma o\'chirildi');
-        }
       }
     } catch (error) {
       toast.error('Xatolik yuz berdi');
@@ -244,22 +174,39 @@ export function NotificationsPage() {
     <div className="min-h-screen bg-secondary-50 dark:bg-secondary-950 py-8">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
+          {/* Ortga tugmasi */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <motion.button
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary-100 dark:bg-secondary-800 hover:bg-secondary-200 dark:hover:bg-secondary-700 text-secondary-700 dark:text-secondary-300 font-medium transition-colors"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Orqaga
+            </motion.button>
+          </motion.div>
+
           {/* Header */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="mb-8"
           >
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
-                  <Bell className="h-6 w-6 text-white" />
+                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center flex-shrink-0">
+                  <Bell className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-3xl font-bold text-secondary-900 dark:text-white">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-secondary-900 dark:text-white">
                     Xabarnomalar
                   </h1>
-                  <p className="text-secondary-600 dark:text-secondary-400">
+                  <p className="text-sm sm:text-base text-secondary-600 dark:text-secondary-400">
                     {unreadCount > 0 ? `${unreadCount} ta o'qilmagan` : 'Yangi xabarlar yo\'q'}
                   </p>
                 </div>
@@ -277,21 +224,19 @@ export function NotificationsPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-xl font-medium transition-colors ${
-                  filter === 'all'
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-white dark:bg-secondary-900 text-secondary-600 dark:text-secondary-400 hover:bg-secondary-100 dark:hover:bg-secondary-800'
-                }`}
+                className={`px-4 py-2 rounded-xl font-medium transition-colors ${filter === 'all'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-white dark:bg-secondary-900 text-secondary-600 dark:text-secondary-400 hover:bg-secondary-100 dark:hover:bg-secondary-800'
+                  }`}
               >
                 Hammasi
               </button>
               <button
                 onClick={() => setFilter('unread')}
-                className={`px-4 py-2 rounded-xl font-medium transition-colors flex items-center gap-2 ${
-                  filter === 'unread'
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-white dark:bg-secondary-900 text-secondary-600 dark:text-secondary-400 hover:bg-secondary-100 dark:hover:bg-secondary-800'
-                }`}
+                className={`px-4 py-2 rounded-xl font-medium transition-colors flex items-center gap-2 ${filter === 'unread'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-white dark:bg-secondary-900 text-secondary-600 dark:text-secondary-400 hover:bg-secondary-100 dark:hover:bg-secondary-800'
+                  }`}
               >
                 O'qilmagan
                 {unreadCount > 0 && (
@@ -324,11 +269,10 @@ export function NotificationsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, x: -100 }}
                     transition={{ delay: index * 0.05 }}
-                    className={`bg-white dark:bg-secondary-900 rounded-2xl p-4 shadow-sm border transition-all ${
-                      notification.isRead
-                        ? 'border-secondary-200 dark:border-secondary-800'
-                        : 'border-primary-200 dark:border-primary-800 bg-primary-50/50 dark:bg-primary-900/10'
-                    }`}
+                    className={`bg-white dark:bg-secondary-900 rounded-2xl p-4 shadow-sm border transition-all ${notification.isRead
+                      ? 'border-secondary-200 dark:border-secondary-800'
+                      : 'border-primary-200 dark:border-primary-800 bg-primary-50/50 dark:bg-primary-900/10'
+                      }`}
                   >
                     <div className="flex items-start gap-4">
                       {/* Icon */}

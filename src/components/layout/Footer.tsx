@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Briefcase, Github, Mail, Phone } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 export function Footer() {
   const containerVariants = {
@@ -19,7 +19,7 @@ export function Footer() {
   return (
     <footer className="bg-secondary-50 dark:bg-secondary-950 border-t border-secondary-200 dark:border-secondary-800">
       <div className="container mx-auto px-4 py-12">
-        <motion.div 
+        <motion.div
           className="grid grid-cols-1 md:grid-cols-4 gap-8"
           variants={containerVariants}
           initial="hidden"
@@ -29,7 +29,7 @@ export function Footer() {
           {/* Brand */}
           <motion.div className="md:col-span-1" variants={itemVariants}>
             <Link to="/" className="flex items-center gap-2 mb-4 group">
-              <motion.div 
+              <motion.div
                 className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center"
                 whileHover={{ scale: 1.1, rotate: 5 }}
               >
@@ -73,16 +73,16 @@ export function Footer() {
             </h4>
             <ul className="space-y-2">
               <li>
-                <button 
-                  onClick={() => alert('Maxfiylik siyosati: Barcha ma\'lumotlar himoyalangan. Demo rejim ishlamoqda.')} 
+                <button
+                  onClick={() => alert('Maxfiylik siyosati: Barcha ma\'lumotlar himoyalangan. Demo rejim ishlamoqda.')}
                   className="text-secondary-600 dark:text-secondary-400 hover:text-primary-600 transition-colors text-sm"
                 >
                   Maxfiylik siyosati
                 </button>
               </li>
               <li>
-                <button 
-                  onClick={() => alert('Foydalanish shartlari: Platformadan foydalanish bepul. Demo rejim ishlamoqda.')} 
+                <button
+                  onClick={() => alert('Foydalanish shartlari: Platformadan foydalanish bepul. Demo rejim ishlamoqda.')}
                   className="text-secondary-600 dark:text-secondary-400 hover:text-primary-600 transition-colors text-sm"
                 >
                   Foydalanish shartlari

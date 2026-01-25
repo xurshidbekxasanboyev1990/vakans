@@ -1,12 +1,13 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { Menu, X, Sun, Moon, Bell, LogOut, User, Settings, Briefcase } from 'lucide-react'
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Avatar, Button } from '@/components/ui'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSocket } from '@/contexts/SocketContext'
 import { useTheme } from '@/contexts/ThemeContext'
-import { Button, Avatar } from '@/components/ui'
-import { useRealTimeNotifications } from '@/hooks/useRealTimeNotifications'
 import { notificationsApi } from '@/lib/api'
+import { getFileUrl } from '@/lib/utils'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Bell, Briefcase, LogOut, Menu, MessageSquare, Moon, Settings, Sun, User, X } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
 export function Header() {
   const { user, isAuthenticated, logout } = useAuth()
@@ -16,10 +17,9 @@ export function Header() {
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
-  const profileDropdownRef = useRef<HTMLDivElement>(null)
-  
-  // Real-time notifications
-  const { isConnected, newNotification } = useRealTimeNotifications()
+
+  // Real-time socket connection
+  const { isConnected, newNotification, unreadNotificationsCount, unreadMessagesCount } = useSocket()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -44,14 +44,9 @@ export function Header() {
   // Fetch unread count
   const fetchUnreadCount = useCallback(async () => {
     try {
-      if (import.meta.env.VITE_DEMO_MODE === 'true') {
-        // Demo mode - static count
-        setUnreadCount(2)
-      } else {
-        const response = await notificationsApi.getUnreadCount()
-        if (response.success && response.data) {
-          setUnreadCount(response.data.count)
-        }
+      const response = await notificationsApi.getUnreadCount()
+      if (response.success && response.data) {
+        setUnreadCount(response.data.unreadCount)
       }
     } catch {
       // Silent fail - network error
@@ -65,7 +60,14 @@ export function Header() {
     }
   }, [isAuthenticated, fetchUnreadCount])
 
-  // Update count when new notification arrives
+  // Update count from socket or notification
+  useEffect(() => {
+    if (unreadNotificationsCount > 0) {
+      setUnreadCount(unreadNotificationsCount)
+    }
+  }, [unreadNotificationsCount])
+
+  // Also update when new notification arrives
   useEffect(() => {
     if (newNotification) {
       setUnreadCount(prev => prev + 1)
@@ -82,20 +84,19 @@ export function Header() {
   }
 
   return (
-    <motion.header 
+    <motion.header
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-white/90 dark:bg-secondary-900/90 backdrop-blur-xl border-b border-secondary-200/50 dark:border-secondary-800/50 shadow-lg shadow-black/5' 
-          : 'bg-transparent'
-      }`}
+      className={`sticky top-0 z-50 w-full transition-all duration-300 ${isScrolled
+        ? 'bg-white/90 dark:bg-secondary-900/90 backdrop-blur-xl border-b border-secondary-200/50 dark:border-secondary-800/50 shadow-lg shadow-black/5'
+        : 'bg-transparent'
+        }`}
     >
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <motion.div 
+            <motion.div
               className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center"
               whileHover={{ scale: 1.1, rotate: 5 }}
               whileTap={{ scale: 0.95 }}
@@ -153,9 +154,31 @@ export function Header() {
 
             {isAuthenticated ? (
               <>
+                {/* Chat */}
+                <Link to="/chat">
+                  <motion.button
+                    className="relative p-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
+                    aria-label="Xabarlar"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <MessageSquare className="h-5 w-5 text-secondary-500" />
+                    {unreadMessagesCount > 0 && (
+                      <motion.span
+                        className="absolute -top-0.5 -right-0.5 min-w-[20px] h-5 px-1.5 rounded-full bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-[10px] font-bold text-white shadow-lg shadow-green-500/50"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                      >
+                        {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                      </motion.span>
+                    )}
+                  </motion.button>
+                </Link>
+
                 {/* Notifications */}
                 <Link to="/notifications">
-                  <motion.button 
+                  <motion.button
                     className="relative p-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
                     aria-label="Bildirishnomalar"
                     whileHover={{ scale: 1.1 }}
@@ -163,8 +186,8 @@ export function Header() {
                   >
                     <Bell className="h-5 w-5 text-secondary-500" />
                     {unreadCount > 0 && (
-                      <motion.span 
-                        className="absolute -top-0.5 -right-0.5 min-w-[20px] h-5 px-1.5 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-[10px] font-bold text-white shadow-lg shadow-red-500/50" 
+                      <motion.span
+                        className="absolute -top-0.5 -right-0.5 min-w-[20px] h-5 px-1.5 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-[10px] font-bold text-white shadow-lg shadow-red-500/50"
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         transition={{ type: 'spring', stiffness: 500, damping: 25 }}
@@ -190,7 +213,7 @@ export function Header() {
                     className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
                   >
                     <Avatar
-                      src={user?.avatar}
+                      src={getFileUrl(user?.avatar)}
                       name={user?.firstName || 'User'}
                       size="sm"
                     />
@@ -209,7 +232,7 @@ export function Header() {
                           className="fixed inset-0 z-40"
                           onClick={() => setIsProfileOpen(false)}
                         />
-                        <motion.div 
+                        <motion.div
                           initial={{ opacity: 0, y: -10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -265,7 +288,7 @@ export function Header() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
+              className="sm:hidden p-2 rounded-xl hover:bg-secondary-100 dark:hover:bg-secondary-800 transition-colors"
               aria-label={isMenuOpen ? 'Menyuni yopish' : 'Menyuni ochish'}
               aria-expanded={isMenuOpen}
             >
@@ -281,12 +304,12 @@ export function Header() {
         {/* Mobile Menu */}
         <AnimatePresence>
           {isMenuOpen && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.3 }}
-              className="md:hidden border-t border-secondary-200 dark:border-secondary-800 overflow-hidden"
+              className="sm:hidden border-t border-secondary-200 dark:border-secondary-800 overflow-hidden"
             >
               <nav className="flex flex-col gap-2 py-4">
                 <motion.div whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>

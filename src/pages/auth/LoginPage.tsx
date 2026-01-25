@@ -1,10 +1,10 @@
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input } from '@/components/ui'
+import { useAuth } from '@/contexts/AuthContext'
+import { motion } from 'framer-motion'
+import { ArrowLeft, ArrowRight, Briefcase, Eye, EyeOff, Lock, Phone, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Eye, EyeOff, Phone, Lock, Briefcase, ArrowRight, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
-import { useAuth } from '@/contexts/AuthContext'
-import { Button, Input, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -90,18 +90,31 @@ export function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-white dark:bg-secondary-950 relative overflow-hidden">
       {/* Apple-style gradient orbs */}
-      <motion.div 
+      <motion.div
         className="absolute top-1/4 -left-32 w-96 h-96 bg-gradient-to-r from-primary-400/20 to-purple-400/20 rounded-full blur-3xl"
         animate={{ x: [0, 30, 0], y: [0, 20, 0] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
-      <motion.div 
+      <motion.div
         className="absolute bottom-1/4 -right-32 w-96 h-96 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full blur-3xl"
         animate={{ x: [0, -30, 0], y: [0, -20, 0] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <motion.div 
+      {/* Ortga tugmasi */}
+      <motion.button
+        onClick={() => navigate('/')}
+        className="absolute top-6 left-6 z-20 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary-100 dark:bg-secondary-800 hover:bg-secondary-200 dark:hover:bg-secondary-700 text-secondary-700 dark:text-secondary-300 font-medium transition-colors"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <ArrowLeft className="w-5 h-5" />
+        Bosh sahifa
+      </motion.button>
+
+      <motion.div
         className="w-full max-w-md relative z-10"
         variants={containerVariants}
         initial="hidden"
@@ -110,7 +123,7 @@ export function LoginPage() {
         {/* Logo */}
         <motion.div variants={itemVariants} className="text-center mb-10">
           <Link to="/" className="inline-flex items-center gap-3">
-            <motion.div 
+            <motion.div
               className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-xl shadow-primary-500/30"
               whileHover={{ scale: 1.05, rotate: 5 }}
               whileTap={{ scale: 0.95 }}
@@ -126,7 +139,7 @@ export function LoginPage() {
         <motion.div variants={itemVariants}>
           <Card className="shadow-2xl border-0 bg-white/80 dark:bg-secondary-900/80 backdrop-blur-xl">
             <CardHeader className="text-center pb-2">
-              <motion.div 
+              <motion.div
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-sm font-medium mb-4"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -140,7 +153,7 @@ export function LoginPage() {
                 Telefon raqam va parol bilan kiring
               </CardDescription>
             </CardHeader>
-            
+
             <CardContent className="pt-6">
               <form onSubmit={handleSubmit} className="space-y-5">
                 <motion.div
@@ -204,7 +217,7 @@ export function LoginPage() {
                 </motion.div>
               </form>
 
-              <motion.div 
+              <motion.div
                 className="mt-8 text-center"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -212,8 +225,8 @@ export function LoginPage() {
               >
                 <p className="text-secondary-600 dark:text-secondary-400">
                   Hisobingiz yo'qmi?{' '}
-                  <Link 
-                    to="/register" 
+                  <Link
+                    to="/register"
                     className="text-primary-600 hover:text-primary-700 font-semibold hover:underline transition-all"
                   >
                     Ro'yxatdan o'ting
@@ -225,14 +238,14 @@ export function LoginPage() {
         </motion.div>
 
         {/* Back to home */}
-        <motion.div 
+        <motion.div
           className="mt-8 text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
         >
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="text-secondary-500 hover:text-secondary-700 dark:hover:text-secondary-300 text-sm font-medium transition-colors"
           >
             ← Bosh sahifaga qaytish

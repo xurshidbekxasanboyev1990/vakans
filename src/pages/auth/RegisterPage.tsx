@@ -1,12 +1,11 @@
+import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle, Input, Select } from '@/components/ui'
+import { useAuth } from '@/contexts/AuthContext'
+import { cn, REGIONS } from '@/lib/utils'
+import { motion } from 'framer-motion'
+import { ArrowLeft, ArrowRight, Briefcase, Building2, CheckCircle, Eye, EyeOff, Lock, Phone, Sparkles, User, UserCircle } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Eye, EyeOff, Phone, Lock, User, Briefcase, UserCircle, Building2, ArrowRight, Sparkles, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import { useAuth } from '@/contexts/AuthContext'
-import { Button, Input, Select, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui'
-import { REGIONS } from '@/lib/utils'
-import { cn } from '@/lib/utils'
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -123,14 +122,14 @@ export function RegisterPage() {
   const getPasswordStrength = () => {
     const password = formData.password
     if (!password) return { strength: 0, label: '' }
-    
+
     let strength = 0
     if (password.length >= 8) strength++
     if (/[A-Z]/.test(password)) strength++
     if (/[a-z]/.test(password)) strength++
     if (/\d/.test(password)) strength++
     if (/[!@#$%^&*]/.test(password)) strength++
-    
+
     if (strength <= 2) return { strength, label: 'Zaif', color: 'bg-red-500' }
     if (strength <= 3) return { strength, label: "O'rta", color: 'bg-yellow-500' }
     return { strength, label: 'Kuchli', color: 'bg-green-500' }
@@ -141,18 +140,31 @@ export function RegisterPage() {
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-white dark:bg-secondary-950 relative overflow-hidden">
       {/* Apple-style gradient orbs */}
-      <motion.div 
+      <motion.div
         className="absolute top-1/4 -left-32 w-96 h-96 bg-gradient-to-r from-primary-400/20 to-purple-400/20 rounded-full blur-3xl"
         animate={{ x: [0, 30, 0], y: [0, 20, 0] }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
-      <motion.div 
+      <motion.div
         className="absolute bottom-1/4 -right-32 w-96 h-96 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full blur-3xl"
         animate={{ x: [0, -30, 0], y: [0, -20, 0] }}
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <motion.div 
+      {/* Ortga tugmasi */}
+      <motion.button
+        onClick={() => navigate('/')}
+        className="absolute top-6 left-6 z-20 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary-100 dark:bg-secondary-800 hover:bg-secondary-200 dark:hover:bg-secondary-700 text-secondary-700 dark:text-secondary-300 font-medium transition-colors"
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <ArrowLeft className="w-5 h-5" />
+        Bosh sahifa
+      </motion.button>
+
+      <motion.div
         className="w-full max-w-lg relative z-10"
         variants={containerVariants}
         initial="hidden"
@@ -161,7 +173,7 @@ export function RegisterPage() {
         {/* Logo */}
         <motion.div variants={itemVariants} className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-3">
-            <motion.div 
+            <motion.div
               className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-xl shadow-primary-500/30"
               whileHover={{ scale: 1.05, rotate: 5 }}
               whileTap={{ scale: 0.95 }}
@@ -177,7 +189,7 @@ export function RegisterPage() {
         <motion.div variants={itemVariants}>
           <Card className="shadow-2xl border-0 bg-white/80 dark:bg-secondary-900/80 backdrop-blur-xl">
             <CardHeader className="text-center pb-2">
-              <motion.div 
+              <motion.div
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-sm font-medium mb-4"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -191,10 +203,10 @@ export function RegisterPage() {
                 Yangi hisob yarating
               </CardDescription>
             </CardHeader>
-            
+
             <CardContent className="pt-4">
               {/* Role Selection - Apple style */}
-              <motion.div 
+              <motion.div
                 className="grid grid-cols-2 gap-4 mb-6"
                 variants={itemVariants}
               >
@@ -211,7 +223,7 @@ export function RegisterPage() {
                   whileTap={{ scale: 0.98 }}
                 >
                   {formData.role === 'worker' && (
-                    <motion.div 
+                    <motion.div
                       className="absolute top-2 right-2"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
@@ -221,8 +233,8 @@ export function RegisterPage() {
                   )}
                   <div className={cn(
                     'p-3 rounded-xl',
-                    formData.role === 'worker' 
-                      ? 'bg-primary-100 dark:bg-primary-900/40' 
+                    formData.role === 'worker'
+                      ? 'bg-primary-100 dark:bg-primary-900/40'
                       : 'bg-secondary-100 dark:bg-secondary-800'
                   )}>
                     <UserCircle className={cn(
@@ -237,7 +249,7 @@ export function RegisterPage() {
                     Ish qidiraman
                   </span>
                 </motion.button>
-                
+
                 <motion.button
                   type="button"
                   onClick={() => setFormData(prev => ({ ...prev, role: 'employer' }))}
@@ -251,7 +263,7 @@ export function RegisterPage() {
                   whileTap={{ scale: 0.98 }}
                 >
                   {formData.role === 'employer' && (
-                    <motion.div 
+                    <motion.div
                       className="absolute top-2 right-2"
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
@@ -261,8 +273,8 @@ export function RegisterPage() {
                   )}
                   <div className={cn(
                     'p-3 rounded-xl',
-                    formData.role === 'employer' 
-                      ? 'bg-primary-100 dark:bg-primary-900/40' 
+                    formData.role === 'employer'
+                      ? 'bg-primary-100 dark:bg-primary-900/40'
                       : 'bg-secondary-100 dark:bg-secondary-800'
                   )}>
                     <Building2 className={cn(
@@ -347,14 +359,14 @@ export function RegisterPage() {
                   />
                   {/* Password strength indicator */}
                   {formData.password && (
-                    <motion.div 
+                    <motion.div
                       className="mt-2"
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                     >
                       <div className="flex items-center gap-2">
                         <div className="flex-1 h-1.5 bg-secondary-200 dark:bg-secondary-700 rounded-full overflow-hidden">
-                          <motion.div 
+                          <motion.div
                             className={cn('h-full rounded-full', passwordStrength.color)}
                             initial={{ width: 0 }}
                             animate={{ width: `${(passwordStrength.strength / 5) * 100}%` }}
@@ -397,14 +409,14 @@ export function RegisterPage() {
                 </motion.div>
               </form>
 
-              <motion.div 
+              <motion.div
                 className="mt-8 text-center"
                 variants={itemVariants}
               >
                 <p className="text-secondary-600 dark:text-secondary-400">
                   Hisobingiz bormi?{' '}
-                  <Link 
-                    to="/login" 
+                  <Link
+                    to="/login"
                     className="text-primary-600 hover:text-primary-700 font-semibold hover:underline transition-all"
                   >
                     Kirish
@@ -416,14 +428,14 @@ export function RegisterPage() {
         </motion.div>
 
         {/* Back to home */}
-        <motion.div 
+        <motion.div
           className="mt-8 text-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
         >
-          <Link 
-            to="/" 
+          <Link
+            to="/"
             className="text-secondary-500 hover:text-secondary-700 dark:hover:text-secondary-300 text-sm font-medium transition-colors"
           >
             ← Bosh sahifaga qaytish
